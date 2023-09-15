@@ -48,20 +48,7 @@
     },
     {
       "group": "Use Cases",
-      "pages": ["essentials/markdown", "essentials/code", "essentials/images", "essentials/settings", "essentials/navigation"]
-    },
-    {
-      "group": "API Documentation",
-      "pages": ["api-reference/authentication"]
-    },
-    {
-      "group": "Endpoint Examples",
-      "pages": [
-        "api-reference/endpoint/get",
-        "api-reference/endpoint/create",
-        "api-reference/endpoint/update",
-        "api-reference/endpoint/delete"
-      ]
+      "pages": ["usecases/markdown", "usecases/code", "usecases/images", "usecases/settings"]
     }
   ],
   "footerSocials": {
