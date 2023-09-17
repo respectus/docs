@@ -39,11 +39,11 @@
   "navigation": [
     {
       "group": "Welcome",
-      "pages": ["introduction", "quickstart", "development"]
+      "pages": ["introduction", "quickstart", "api"]
     },
     {
       "group": "Use Cases",
-      "pages": ["usecases/markdown", "usecases/code", "usecases/images", "usecases/settings"]
+      "pages": ["usecases/execution", "usecases/training", "usecases/finetune", "usecases/rag"]
     }
   ],
   "footerSocials": {
