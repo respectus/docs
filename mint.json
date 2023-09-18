@@ -44,6 +44,10 @@
     {
       "group": "Use Cases",
       "pages": ["usecases/execution", "usecases/training", "usecases/finetune", "usecases/rag"]
+    },
+    {
+      "group": "Company",
+      "pages": ["about", "faq", "privacy", "terms"]
     }
   ],
   "footerSocials": {
