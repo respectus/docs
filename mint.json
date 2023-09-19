@@ -39,7 +39,7 @@
   "navigation": [
     {
       "group": "Welcome",
-      "pages": ["introduction", "quickstart", "api"]
+      "pages": ["welcome/introduction", "welcome/quickstart", "welcome/api"]
     },
     {
       "group": "Use Cases",
@@ -47,7 +47,7 @@
     },
     {
       "group": "Company",
-      "pages": ["about", "faq", "privacy", "terms"]
+      "pages": ["company/about", "company/faq", "company/privacy", "company/terms"]
     }
   ],
   "footerSocials": {
