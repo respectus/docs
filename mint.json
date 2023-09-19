@@ -32,8 +32,8 @@
   "anchors": [
     {
       "name": "Community",
-      "icon": "slack",
-      "url": "https://mintlify.com/community"
+      "icon": "linkedin",
+      "url": "https://www.linkedin.com/company/Cerevox"
     }
   ],
   "navigation": [
@@ -51,8 +51,8 @@
     }
   ],
   "footerSocials": {
-    "twitter": "https://twitter.com/mintlify",
-    "github": "https://github.com/mintlify",
-    "linkedin": "https://www.linkedin.com/company/mintsearch"
+    "twitter": "https://twitter.com/CerevoxAI",
+    "github": "https://github.com/CerevoxAI",
+    "linkedin": "https://www.linkedin.com/company/Cerevox"
   }
 }
