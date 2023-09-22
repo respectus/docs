@@ -3,7 +3,8 @@
   "name": "Cerevox",
   "logo": {
     "dark": "/logo/dark3.png",
-    "light": "/logo/light.png"
+    "light": "/logo/light.png",
+    "href": "https://cerevox.ai/"
   },
   "favicon": "/favicon.png",
   "colors": {
