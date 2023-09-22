@@ -47,7 +47,11 @@
     },
     {
       "group": "Company",
-      "pages": ["company/about", "company/faq", "company/privacy", "company/terms"]
+      "pages": ["company/about", "company/faq"]
+    },
+    {
+      "group": "Legal",
+      "pages": ["legal/privacy", "legal/terms"]
     }
   ],
   "footerSocials": {
