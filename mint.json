@@ -16,9 +16,12 @@
       "light":"#F8FAFC"
     },
     "anchors": {
-      "from": "#F8FAFC",
+      "from": "#111827",
       "to": "#FDB515"
     }
+  },
+  "topbar": {
+    "style": "default"
   },
   "topbarLinks": [
     {
