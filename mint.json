@@ -47,7 +47,7 @@
     },
     {
       "group": "Use Cases",
-      "pages": ["usecases/execution", "usecases/training", "usecases/finetune", "usecases/rag"]
+      "pages": ["usecases/financial", "usecases/legal", "usecases/market", "usecases/model", "usecases/knowledge"]
     },
     {
       "group": "Company",
