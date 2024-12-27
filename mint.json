@@ -12,18 +12,18 @@
     "light": "#FDB515",
     "dark": "#0D001D",
     "background": {
-      "dark":"#010127",
-      "light":"#B9D3B6"
+      "dark":"#111827",
+      "light":"#F8FAFC"
     },
     "anchors": {
-      "from": "#B9D3B6",
+      "from": "#F8FAFC",
       "to": "#FDB515"
     }
   },
   "topbarLinks": [
     {
       "name": "Support",
-      "url": "mailto:support@golunos.com"
+      "url": "mailto:support@cerevox.ai"
     }
   ],
   "topbarCtaButton": {
