@@ -1,45 +1,62 @@
 ---
 title: 'Quickstart'
-description: 'Start normalizing your data in under 2 minutes'
+description: 'Start exploring your data in minutes with Cerevox'
 ---
 
-## Account Creation
+## Getting Started
 
 <Steps>
   <Step title="Sign Up for a User account">
     Register and create your personal user account with [Cerevox](https://cerevox.ai/app)
   </Step>
-  <Step title="Create a Cerevox Account">
-    Establish a Cerevox Account to access our platform's full range data normalization features.
+  <Step title="Connect Data">
+     Upload your documents or connect a folder containing multiple files to your account. Our platform can handle a variety of file types and sizes, allowing you to work with all of your data in one place.
   </Step>
-  <Step title="Provision Keys">
-    Generate a secure API key for your Cerevox Account to start normalizing your data. Remove keys that have been compromised.
+  <Step title="Ask Questions">
+    Once your data is uploaded, simply type in your question in the search bar. Cerevox will instantly search across your entire dataset to find the most accurate and relevant sources to answer your query.
   </Step>
+  <Step title="Explore Answers and Sources">
+    Get an accurate, detailed answer sourced directly from your data. Cerevox not only provides the answer but also shows you the sources that contributed to the response, helping you verify and understand the context.
+  </Step> 
 </Steps>
 
-### Data Normalization
+### Exploring Data
 
 <AccordionGroup>
-  <Accordion icon="quinscape" title="API">
-    Normalize documents through data.cerevox.ai
+  <Accordion icon="magnifying-glass" title="Ask Questions">
+    Start asking questions based on your data. Whether it’s about specific details, summaries, or trends, Cerevox efficiently analyzes the entire dataset and provides insightful answers.  
+    **Example Question**: "What are the key financial trends in the last 10 years of these documents?"
+    Once you ask your question, Cerevox finds the most relevant information across all connected documents and delivers an accurate answer.
+  </Accordion>
+  <Accordion icon="database" title="View Your Sources">
+    Cerevox doesn’t just give you answers — it shows you exactly where the information is coming from. Each answer is linked to the specific files or sections in your data that were used to derive it.
+    This transparency ensures that you can quickly verify the response and make confident decisions based on your data.
+  </Accordion>
+  <Accordion icon="folder" title="Manage Your Data">
+    Easily manage your uploaded documents and data sets. You can add new files, organize your data into folders, and access everything through a simple and intuitive UI.
+    **Tip**: Keep your data up to date by uploading new versions of your documents directly to your Cerevox account, so you always have the latest information at your fingertips.  
+    <sup>Coming Soon!</sup>
+  </Accordion>
+  <Accordion icon="cloud" title="Collaborate & Share">
+    Invite team members to access your data and collaborate on analysis. You can share specific results or entire datasets for collective insights. This feature is great for teams working on business analysis, legal review, or research projects.  
+    <sup>Coming Soon!</sup>
+  </Accordion>
+</AccordionGroup>
 
-    ```bash API Call Example
-    curl -X 'POST' \
-    'https://www.data.cerevox.ai/v0/elements' -k \
-    -H 'accept: application/json' \
-    -H 'Content-Type: multipart/form-data' \
-    -H 'cerevox-api-key: <YOUR-KEY>' \
-    -F 'files=@sample.pdf'
-    ```
+### Advanced Features (Coming Soon!)
+
+<AccordionGroup>
+  <Accordion icon="quinscape" title="API Access">
+    Our powerful API will allow you to integrate Cerevox’s capabilities into your own services, automating the process of uploading files, querying data, and retrieving answers programmatically. Stay tuned for detailed API documentation and access instructions.
   </Accordion>
-  <Accordion icon="python" title="Python Library">
-    Coming Soon!
+  <Accordion icon="python" title="Python Integration">
+    Integrate Cerevox with your Python workflows to automate data analysis and answer generation directly from your code. This feature will be coming soon, and we’ll provide documentation to get you started.
   </Accordion>
-  <Accordion icon="node-js" iconType="regular" color="#2ab573" title="Node.js Library">
-    Coming Soon!
+  <Accordion icon="node-js" iconType="regular" color="#2ab573" title="Node.js Integration">
+    Stay tuned for our Node.js SDK, which will allow you to programmatically access Cerevox’s powerful capabilities from within your applications.
   </Accordion>
-  <Accordion icon="terminal" title="CLI">
-    Coming Soon!
+  <Accordion icon="terminal" title="CLI Tool">
+    The Cerevox Command Line Interface will allow you to interact with your data and ask questions directly from the terminal. We’ll be rolling this out soon.
   </Accordion>
 </AccordionGroup>
 

@@ -43,7 +43,7 @@
   "navigation": [
     {
       "group": "Welcome",
-      "pages": ["welcome/introduction", "welcome/quickstart", "welcome/api"]
+      "pages": ["welcome/introduction", "welcome/quickstart"]
     },
     {
       "group": "Use Cases",
