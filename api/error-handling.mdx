@@ -1,0 +1,722 @@
+---
+title: "Error Handling"
+description: "Complete guide to handling errors and exceptions in Lexa"
+---
+
+## Exception Hierarchy
+
+<CodeGroup>
+```python Exception Types
+from cerevox import (
+    LexaError,                   # Base exception
+    LexaAuthError,               # Authentication/authorization issues
+    LexaRateLimitError,          # Rate limiting
+    LexaTimeoutError,            # Request timeouts
+    LexaJobFailedError,          # Document processing failures
+    LexaUnsupportedFileError,    # Unsupported file types
+    LexaValidationError,         # Request validation errors
+    LexaQuotaExceededError,      # Usage quota exceeded
+    LexaServerError              # Server-side errors
+)
+```
+</CodeGroup>
+
+## Error Types
+
+### LexaError (Base Exception)
+
+All Lexa-specific exceptions inherit from `LexaError`.
+
+<CodeGroup>
+```python Basic Error Handling
+from cerevox import Lexa, LexaError
+
+client = Lexa(api_key="your-api-key")
+
+try:
+    documents = client.parse(["document.pdf"])
+except LexaError as e:
+    print(f"Lexa error: {e.message}")
+    print(f"Status code: {e.status_code}")
+    print(f"Request ID: {e.request_id}")
+    print(f"Retry suggested: {e.retry_suggested}")
+```
+
+```python LexaError Properties
+# All LexaError instances have these properties:
+error.message        # Human-readable error message
+error.status_code    # HTTP status code (if applicable)
+error.request_id     # Unique request identifier for debugging
+error.response_data  # Additional error details (dict)
+error.retry_suggested  # Whether retry is recommended (bool)
+```
+</CodeGroup>
+
+### LexaAuthError
+
+Raised when API key authentication or authorization fails.
+
+<CodeGroup>
+```python Common Causes
+# Invalid API key
+client = Lexa(api_key="invalid-key")
+
+# Missing API key
+client = Lexa()  # No CEREVOX_API_KEY environment variable
+
+# Expired or revoked API key
+# Access forbidden due to permissions
+```
+
+```python Handling Authentication Errors
+from cerevox import Lexa, LexaAuthError
+
+try:
+    client = Lexa(api_key="your-api-key")
+    documents = client.parse(["document.pdf"])
+except LexaAuthError as e:
+    print("Authentication failed!")
+    print("Please check your API key at https://cerevox.ai/lexa")
+    print(f"Error: {e.message}")
+    print(f"Status: {e.status_code}")  # 401 or 403
+```
+</CodeGroup>
+
+**Status Codes:**
+- `401` - Invalid or expired API key
+- `403` - Access forbidden (insufficient permissions)
+
+### LexaRateLimitError
+
+Raised when API rate limits are exceeded.
+
+<CodeGroup>
+```python Rate Limit Handling
+from cerevox import Lexa, LexaRateLimitError
+import time
+
+def parse_with_retry(client, files, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return client.parse(files)
+        except LexaRateLimitError as e:
+            if attempt == max_retries - 1:
+                raise e
+            
+            # Use recommended retry delay
+            wait_time = e.get_retry_delay()
+            print(f"Rate limited. Waiting {wait_time} seconds...")
+            time.sleep(wait_time)
+    
+    raise LexaRateLimitError("Max retries exceeded")
+```
+
+```python Rate Limit Properties
+try:
+    documents = client.parse(["document.pdf"])
+except LexaRateLimitError as e:
+    print(f"Rate limit exceeded: {e.message}")
+    print(f"Retry after: {e.retry_after} seconds")
+    print(f"Recommended delay: {e.get_retry_delay()} seconds")
+    print(f"Retry suggested: {e.retry_suggested}")  # Always True
+```
+</CodeGroup>
+
+**Status Code:** `429`
+
+### LexaValidationError
+
+Raised when request parameters are invalid.
+
+<CodeGroup>
+```python Common Validation Errors
+from cerevox import Lexa, LexaValidationError
+
+client = Lexa(api_key="your-api-key")
+
+try:
+    # Invalid file path or parameters
+    documents = client.parse(["/nonexistent/file.pdf"])
+except LexaValidationError as e:
+    print(f"Validation error: {e.message}")
+    print(f"Validation errors: {e.validation_errors}")
+    print(f"Retry suggested: {e.retry_suggested}")  # Always False
+```
+
+```python Validation Best Practices
+import os
+from pathlib import Path
+
+def validate_files(files):
+    """Validate files before parsing"""
+    validated_files = []
+    
+    for file in files:
+        if isinstance(file, (str, Path)):
+            file_path = Path(file)
+            if not file_path.exists():
+                raise LexaValidationError(f"File not found: {file_path}")
+            if file_path.stat().st_size == 0:
+                raise LexaValidationError(f"File is empty: {file_path}")
+            validated_files.append(str(file_path))
+        else:
+            validated_files.append(file)
+    
+    return validated_files
+
+# Use validation
+try:
+    validated_files = validate_files(["document.pdf", "report.docx"])
+    documents = client.parse(validated_files)
+except LexaValidationError as e:
+    print(f"Validation failed: {e.message}")
+    if e.validation_errors:
+        for field, error in e.validation_errors.items():
+            print(f"  {field}: {error}")
+```
+</CodeGroup>
+
+**Status Code:** `400`
+
+### LexaJobFailedError
+
+Raised when document processing fails on the server side.
+
+<CodeGroup>
+```python Processing Error Handling
+from cerevox import Lexa, LexaJobFailedError
+
+try:
+    documents = client.parse(["corrupted-document.pdf"])
+except LexaJobFailedError as e:
+    print(f"Processing failed: {e.message}")
+    print(f"Job ID: {e.job_id}")
+    print(f"Failure reason: {e.failure_reason}")
+    print(f"Retry suggested: {e.retry_suggested}")
+```
+
+```python Handling Specific Processing Errors
+def handle_job_failure(error):
+    """Handle different types of job failures"""
+    if not error.retry_suggested:
+        if "invalid_file_format" in (error.failure_reason or ""):
+            return "File format not supported. Check supported formats."
+        elif "file_corrupted" in (error.failure_reason or ""):
+            return "File appears corrupted. Please check the source file."
+        elif "file_too_large" in (error.failure_reason or ""):
+            return "File exceeds size limits. Try splitting the file."
+        else:
+            return f"Processing failed: {error.message}"
+    else:
+        return "Temporary processing failure. Retry recommended."
+
+try:
+    documents = client.parse(["document.pdf"])
+except LexaJobFailedError as e:
+    advice = handle_job_failure(e)
+    print(advice)
+    
+    if e.retry_suggested:
+        print("You can retry this request.")
+```
+</CodeGroup>
+
+**Common Failure Reasons:**
+- `invalid_file_format` - Unsupported file format (not retryable)
+- `file_corrupted` - File is corrupted (not retryable)
+- `file_too_large` - File exceeds size limits (not retryable)
+- `unsupported_format` - Format not supported (not retryable)
+- `temporary_server_error` - Temporary issue (retryable)
+
+### LexaUnsupportedFileError
+
+Raised when attempting to process unsupported file formats.
+
+<CodeGroup>
+```python Unsupported File Handling
+from cerevox import Lexa, LexaUnsupportedFileError
+
+try:
+    documents = client.parse(["document.xyz"])
+except LexaUnsupportedFileError as e:
+    print(f"Unsupported file type: {e.message}")
+    print(f"File type: {e.file_type}")
+    print(f"Supported types: {e.supported_types}")
+    print(f"Retry suggested: {e.retry_suggested}")  # Always False
+```
+
+```python File Type Validation
+def check_file_support(file_path, supported_types=None):
+    """Check if file type is supported"""
+    if supported_types is None:
+        supported_types = ['.pdf', '.docx', '.txt', '.md']  # Example
+    
+    file_ext = Path(file_path).suffix.lower()
+    
+    if file_ext not in supported_types:
+        raise LexaUnsupportedFileError(
+            f"File type {file_ext} not supported",
+            file_type=file_ext,
+            supported_types=supported_types
+        )
+    
+    return True
+
+# Usage
+try:
+    check_file_support("document.pdf")
+    documents = client.parse(["document.pdf"])
+except LexaUnsupportedFileError as e:
+    print(f"Cannot process file: {e.message}")
+```
+</CodeGroup>
+
+**Status Code:** `415`
+
+### LexaTimeoutError
+
+Raised when operations exceed timeout limits.
+
+<CodeGroup>
+```python Timeout Handling
+from cerevox import Lexa, LexaTimeoutError
+import time
+
+def parse_with_custom_timeout(client, files, base_timeout=60):
+    """Parse with dynamic timeout based on file size"""
+    
+    # Calculate timeout based on file sizes
+    total_size = sum(os.path.getsize(f) for f in files if isinstance(f, str))
+    timeout = base_timeout + (total_size // (1024 * 1024))  # +1s per MB
+    
+    try:
+        return client.parse(files, timeout=timeout)
+    except LexaTimeoutError as e:
+        print(f"Operation timed out after {e.timeout_duration} seconds")
+        print(f"Retry suggested: {e.retry_suggested}")  # True
+        print("Try with longer timeout or split the files")
+        raise
+```
+
+```python Async Timeout Handling
+import asyncio
+from cerevox import AsyncLexa, LexaTimeoutError
+
+async def parse_with_cancellation(files):
+    """Parse with cancellation support"""
+    async with AsyncLexa(api_key="your-api-key") as client:
+        try:
+            # Race between parsing and timeout
+            documents = await asyncio.wait_for(
+                client.parse(files), 
+                timeout=300.0
+            )
+            return documents
+        except asyncio.TimeoutError:
+            print("Operation cancelled due to timeout")
+            raise LexaTimeoutError("Async operation timed out")
+```
+</CodeGroup>
+
+**Status Code:** `408`
+
+### LexaQuotaExceededError
+
+Raised when usage quotas are exceeded.
+
+<CodeGroup>
+```python Quota Handling
+from cerevox import Lexa, LexaQuotaExceededError
+
+try:
+    documents = client.parse(["document.pdf"])
+except LexaQuotaExceededError as e:
+    print(f"Quota exceeded: {e.message}")
+    print(f"Quota type: {e.quota_type}")
+    print(f"Reset time: {e.reset_time}")
+    print(f"Retry suggested: {e.retry_suggested}")  # True if reset_time exists
+    
+    if e.reset_time:
+        print(f"Quota resets at: {e.reset_time}")
+    else:
+        print("Contact support to increase quota")
+```
+
+```python Quota Management
+def handle_quota_exceeded(error):
+    """Handle quota exceeded errors"""
+    if error.quota_type == "monthly":
+        return "Monthly quota exceeded. Upgrade plan or wait for reset."
+    elif error.quota_type == "daily":
+        return "Daily quota exceeded. Try again tomorrow."
+    elif error.quota_type == "concurrent":
+        return "Too many concurrent requests. Reduce parallelism."
+    else:
+        return f"Quota exceeded: {error.message}"
+
+try:
+    documents = client.parse(["document.pdf"])
+except LexaQuotaExceededError as e:
+    advice = handle_quota_exceeded(e)
+    print(advice)
+```
+</CodeGroup>
+
+**Status Code:** `402`
+
+### LexaServerError
+
+Raised for server-side errors (5xx status codes).
+
+<CodeGroup>
+```python Server Error Handling
+from cerevox import Lexa, LexaServerError
+import time
+
+def robust_parse(client, files, max_retries=5):
+    """Parse with server error recovery"""
+    for attempt in range(max_retries):
+        try:
+            return client.parse(files)
+        except LexaServerError as e:
+            if attempt == max_retries - 1:
+                raise e
+            
+            # Exponential backoff for server errors
+            wait_time = 2 ** attempt
+            print(f"Server error on attempt {attempt + 1}: {e.message}")
+            print(f"Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+    
+    raise LexaServerError("Max server error retries exceeded")
+```
+</CodeGroup>
+
+**Status Codes:** `500`, `502`, `503`, `504`
+
+## Intelligent Error Classification
+
+The SDK provides intelligent error classification through the `create_error_from_response` function.
+
+<CodeGroup>
+```python Error Classification
+from cerevox.exceptions import create_error_from_response
+
+# Automatically classifies errors based on:
+# - HTTP status code
+# - Response error_type field
+# - Error message content
+# - Additional response metadata
+
+def handle_api_response(status_code, response_data, request_id=None):
+    """Example of automatic error classification"""
+    if status_code >= 400:
+        error = create_error_from_response(status_code, response_data, request_id)
+        
+        # Error is automatically classified to the correct type
+        if isinstance(error, LexaRateLimitError):
+            print(f"Rate limited. Retry after {error.get_retry_delay()}s")
+        elif isinstance(error, LexaAuthError):
+            print("Authentication failed. Check API key.")
+        elif isinstance(error, LexaJobFailedError):
+            print(f"Job {error.job_id} failed: {error.failure_reason}")
+        
+        raise error
+```
+</CodeGroup>
+
+## Retry Strategies
+
+The SDK provides intelligent retry guidance through the `get_retry_strategy` function.
+
+<CodeGroup>
+```python Intelligent Retry
+from cerevox.exceptions import get_retry_strategy
+import time
+
+def smart_retry_parse(client, files):
+    """Parse with intelligent retry strategy"""
+    max_attempts = 3
+    
+    for attempt in range(max_attempts):
+        try:
+            return client.parse(files)
+        except LexaError as e:
+            strategy = get_retry_strategy(e)
+            
+            if not strategy["should_retry"] or attempt == max_attempts - 1:
+                print(f"Not retrying: {strategy['reason']}")
+                raise e
+            
+            delay = strategy["delay"]
+            backoff = strategy["backoff"]
+            
+            # Apply backoff strategy
+            if backoff == "exponential":
+                delay = delay * (2 ** attempt)
+            elif backoff == "linear":
+                delay = delay * (attempt + 1)
+            # "fixed" backoff uses delay as-is
+            
+            print(f"Retrying in {delay}s ({strategy['reason']})")
+            time.sleep(delay)
+    
+    raise RuntimeError("Max retries exceeded")
+```
+
+```python Retry Strategy Examples
+# Different errors get different retry strategies:
+
+# Rate limit error:
+# {
+#     "should_retry": True,
+#     "delay": 60,  # From retry_after or default
+#     "backoff": "fixed",
+#     "max_retries": 3,
+#     "reason": "Rate limit - use fixed delay"
+# }
+
+# Server error:
+# {
+#     "should_retry": True,
+#     "delay": 2,
+#     "backoff": "exponential", 
+#     "max_retries": 5,
+#     "reason": "Server error - aggressive retry"
+# }
+
+# Validation error:
+# {
+#     "should_retry": False,
+#     "reason": "Error type not suitable for retry",
+#     "delay": 0,
+#     "max_retries": 0
+# }
+```
+</CodeGroup>
+
+## Best Practices
+
+### Comprehensive Error Handling
+
+<CodeGroup>
+```python Production Error Handling
+from cerevox import Lexa, LexaError, LexaAuthError, LexaRateLimitError
+from cerevox.exceptions import get_retry_strategy
+import logging
+import time
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class RobustLexaClient:
+    def __init__(self, api_key, max_retries=3):
+        self.client = Lexa(api_key=api_key)
+        self.max_retries = max_retries
+    
+    def parse_documents(self, files, mode=None):
+        """Parse documents with comprehensive error handling"""
+        for attempt in range(self.max_retries):
+            try:
+                return self.client.parse(files, mode=mode)
+            
+            except LexaError as e:
+                strategy = get_retry_strategy(e)
+                
+                # Log the error
+                logger.error(
+                    f"Parsing failed (attempt {attempt + 1}): {e.message}",
+                    extra={
+                        'error_type': type(e).__name__,
+                        'status_code': e.status_code,
+                        'request_id': e.request_id,
+                        'retry_suggested': e.retry_suggested
+                    }
+                )
+                
+                # Don't retry certain error types
+                if isinstance(e, (LexaAuthError, LexaValidationError, LexaUnsupportedFileError)):
+                    logger.error(f"Non-retryable error: {e.message}")
+                    raise e
+                
+                # Check if we should retry
+                if not strategy["should_retry"] or attempt == self.max_retries - 1:
+                    logger.error(f"Not retrying: {strategy['reason']}")
+                    raise e
+                
+                # Calculate delay with backoff
+                delay = strategy["delay"]
+                if strategy["backoff"] == "exponential":
+                    delay = delay * (2 ** attempt)
+                elif strategy["backoff"] == "linear":
+                    delay = delay * (attempt + 1)
+                
+                logger.warning(f"Retrying in {delay}s ({strategy['reason']})")
+                time.sleep(delay)
+        
+        raise RuntimeError("Max retries exceeded")
+
+# Usage
+client = RobustLexaClient(api_key="your-api-key")
+try:
+    documents = client.parse_documents(["document.pdf"])
+    print(f"Successfully parsed {len(documents)} documents")
+except LexaError as e:
+    print(f"Parsing failed: {e.message}")
+```
+</CodeGroup>
+
+### Error Monitoring and Logging
+
+<CodeGroup>
+```python Error Monitoring
+import logging
+from cerevox import Lexa, LexaError
+
+# Custom error handler
+class LexaErrorHandler(logging.Handler):
+    def emit(self, record):
+        if record.name == 'cerevox' and record.levelno >= logging.ERROR:
+            # Send to monitoring service
+            self.send_to_monitoring(record)
+    
+    def send_to_monitoring(self, record):
+        # Implementation depends on your monitoring solution
+        pass
+
+# Configure logging
+logger = logging.getLogger('cerevox')
+logger.addHandler(LexaErrorHandler())
+
+def monitored_parse(client, files):
+    """Parse with error monitoring"""
+    try:
+        return client.parse(files)
+    except LexaError as e:
+        logger.error(
+            f"Parsing failed",
+            extra={
+                'error_type': type(e).__name__,
+                'status_code': e.status_code,
+                'request_id': e.request_id,
+                'files': len(files) if isinstance(files, list) else 1,
+                'message': e.message,
+                'retry_suggested': e.retry_suggested
+            }
+        )
+        raise
+```
+</CodeGroup>
+
+### Graceful Degradation
+
+<CodeGroup>
+```python Fallback Strategies
+from cerevox import Lexa, ProcessingMode, LexaError, LexaJobFailedError
+
+def parse_with_fallback(client, files):
+    """Parse with fallback to simpler processing modes"""
+    
+    # Try processing modes in order of preference
+    modes = [ProcessingMode.ADVANCED, ProcessingMode.DEFAULT]
+    
+    for mode in modes:
+        try:
+            return client.parse(files, mode=mode)
+        except LexaJobFailedError as e:
+            if not e.retry_suggested and mode != ProcessingMode.DEFAULT:
+                print(f"Failed with {mode.value} mode, trying simpler mode...")
+                continue
+            raise e
+        except LexaError as e:
+            if mode == ProcessingMode.DEFAULT:
+                raise e  # All modes failed
+            continue
+    
+    raise RuntimeError("All processing modes failed")
+
+def parse_with_chunking(client, files, chunk_size=10):
+    """Parse large batches in smaller chunks"""
+    all_documents = []
+    
+    for i in range(0, len(files), chunk_size):
+        chunk = files[i:i + chunk_size]
+        try:
+            documents = client.parse(chunk)
+            all_documents.extend(documents)
+        except LexaError as e:
+            print(f"Chunk {i//chunk_size + 1} failed: {e.message}")
+            # Continue with remaining chunks if error allows
+            if not e.retry_suggested:
+                continue
+            raise e
+    
+    return all_documents
+```
+</CodeGroup>
+
+## Error Recovery Patterns
+
+### Circuit Breaker Pattern
+
+<CodeGroup>
+```python Circuit Breaker
+import time
+from enum import Enum
+
+class CircuitState(Enum):
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, recovery_timeout=60):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = CircuitState.CLOSED
+    
+    def call(self, func, *args, **kwargs):
+        if self.state == CircuitState.OPEN:
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = CircuitState.HALF_OPEN
+            else:
+                raise RuntimeError("Circuit breaker is OPEN")
+        
+        try:
+            result = func(*args, **kwargs)
+            self.on_success()
+            return result
+        except Exception as e:
+            self.on_failure()
+            raise e
+    
+    def on_success(self):
+        self.failure_count = 0
+        self.state = CircuitState.CLOSED
+    
+    def on_failure(self):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        
+        if self.failure_count >= self.failure_threshold:
+            self.state = CircuitState.OPEN
+
+# Usage
+circuit_breaker = CircuitBreaker()
+client = Lexa(api_key="your-api-key")
+
+try:
+    documents = circuit_breaker.call(client.parse, ["document.pdf"])
+except RuntimeError as e:
+    print(f"Circuit breaker active: {e}")
+```
+</CodeGroup>
+
+---
+
+<Card title="Next Steps" icon="arrow-right">
+  Learn about [client configuration](/api/configuration) for optimal performance and reliability.
+</Card> 

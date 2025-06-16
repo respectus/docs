@@ -3,72 +3,304 @@ title: 'FAQ'
 description: 'Frequently Asked Questions'
 ---
 
-## General Questions
-
-<AccordionGroup>
-  <Accordion title="What is Cerevox?">
-    Cerevox is a powerful research assistant designed to help you analyze and extract insights from large datasets across multiple file types. It enables you to efficiently search through your documents while providing verifiable, source-backed answers to your queries. Whether you're working with PDFs, spreadsheets, or legal documents, Cerevox ensures every response is accurate and traceable to its source.
-  </Accordion>
-  <Accordion title="How can Cerevox benefit my business?">
-    Cerevox streamlines your research and analysis workflows by enabling you to:
-    - Process and analyze large volumes of documents efficiently
-    - Work with multiple file types in a single platform
-    - Get answers with precise source citations
-    - Perform cross-document analysis
-    - Save time on data searching and verification
-    This allows your team to focus on analysis and decision-making rather than searching for information.
-  </Accordion>
-  <Accordion title="What file types does Cerevox support?">
-    Cerevox supports a wide range of text-based formats including:
-    - PDF, TXT, CSV
-    - DOCX, PPTX, XLSX
-    - Google Docs, Google Slides, Google Sheets
-    - Parquet and JSON files
-    We can efficiently process these files regardless of size, handling documents from a few KB to multiple TBs.
-  </Accordion>
-</AccordionGroup>
-
-## Use Cases
-
-<AccordionGroup>
-  <Accordion title="How can Cerevox help with financial analysis?">
-    For financial analysis, Cerevox enables you to efficiently search and analyze 10-K filings, annual reports, and financial statements. You can extract key insights from both tables and text, with all information properly cited to its source. This makes it easier to compile financial data, track metrics across documents, and verify information for reporting.
-  </Accordion>
-  <Accordion title="Can Cerevox assist with legal research?">
-    Yes, Cerevox is particularly valuable for legal research. It allows you to quickly analyze large sets of legal discovery documents, contracts, and case files while maintaining clear source citations. This ensures that every finding is traceable and verifiable, which is crucial for legal work. The platform's ability to search across multiple documents simultaneously significantly speeds up the research process.
-  </Accordion>
-  <Accordion title="How does Cerevox support enterprise knowledge management?">
-    Cerevox helps organizations better manage their internal knowledge by enabling efficient search and sourcing of answers from internal documents, manuals, and policy archives. The platform's ability to handle diverse file types and provide accurate citations makes it easier to maintain and access institutional knowledge. This is particularly valuable for large organizations with extensive documentation spread across multiple formats and locations.
-  </Accordion>
-</AccordionGroup>
-
 ## Getting Started
 
 <AccordionGroup>
-  <Accordion title="How do I get started with Cerevox?">
-    Getting started with Cerevox is simple:
-    1. Sign up for a user account at cerevox.ai/app
-    2. Connect your data by uploading documents or connecting a folder
-    3. Start asking questions about your data
-    4. Explore answers and verify sources through our intuitive interface
+  <Accordion title="What makes Lexa different?">
+    Lexa is Cerevox's enterprise-grade document parsing API that delivers 10x better performance and accuracy compared to traditional solutions. Unlike other APIs that struggle with complex layouts and structured data, Lexa uses state-of-the-art AI models to extract content with 99.9% accuracy while maintaining native async support and vector database optimization.
+    
+    Key differentiators:
+    - **SOTA accuracy** with advanced ML models
+    - **10x faster** processing with sub-second response times
+    - **Vector DB ready** chunks optimized for RAG applications
+    - **12+ file formats** with consistent results
+    - **Enterprise-grade** reliability with 99.9% SLA
   </Accordion>
-  <Accordion title="What kind of support is available?">
-    We provide comprehensive support to ensure your success with Cerevox:
-    - Email support for technical questions
-    - Regular platform updates and improvements
-    - Detailed documentation and tutorials (Coming Soon)
-    For enterprise customers, we offer additional support options to meet your specific needs.
+  
+  <Accordion title="How quickly can I integrate?">
+    You can start parsing documents in under 5 minutes:
+    
+    ```python
+    pip install cerevox
+    ```
+    
+    ```python
+    from cerevox import Lexa
+    
+    client = Lexa(api_key="your-api-key")
+    documents = client.parse(["document.pdf"])
+    
+    # Get vector DB ready chunks
+    chunks = documents.get_all_text_chunks(target_size=500)
+    ```
+    
+    Our Python SDK handles authentication, retries, and error handling automatically. We also provide comprehensive examples for Django, Flask, FastAPI, and async applications.
   </Accordion>
-  <Accordion title="How does data integration work?">
-    Cerevox currently integrates seamlessly with Google Drive, and we're expanding our integration capabilities. Coming soon are connections with:
-    - AWS S3
-    - Microsoft SharePoint
-    - Box
-    - Dropbox
-    - PowerBI
-    This allows you to easily access and analyze data from your existing storage solutions.
+  
+  <Accordion title="What formats does Lexa support?">
+    Lexa supports 12+ file formats with consistent, high-accuracy parsing:
+    
+    **Documents**: PDF, DOCX, PPTX, TXT, HTML, RTF  
+    **Spreadsheets**: XLSX, CSV, TSV  
+    **Google Workspace**: Google Docs, Sheets, Slides  
+    **Data**: JSON, Parquet  
+    
+    All formats support advanced table extraction, image detection, and metadata preservation. File size limits range from 100MB for complex documents to 1GB+ for simple text files.
   </Accordion>
-  <Accordion title="Is my data secure with Cerevox?">
-    We prioritize the security and privacy of your data. All data processing is done within your secure environment, and we maintain strict data handling protocols. Our platform is designed to meet enterprise security requirements, ensuring your sensitive information remains protected while enabling powerful analysis capabilities.
+</AccordionGroup>
+
+## Technical Implementation
+
+<AccordionGroup>
+  <Accordion title="How does async processing work?">
+    Lexa provides native async support with the `AsyncLexa` client:
+    
+    ```python
+    import asyncio
+    from cerevox import AsyncLexa
+    
+    async def main():
+        async with AsyncLexa(api_key="your-api-key") as client:
+            # Process multiple documents concurrently
+            documents = await client.parse([
+                "report1.pdf", "report2.docx", "data.xlsx"
+            ])
+            
+            # Batch process with progress tracking
+            async for status in client.parse_with_progress(files):
+                print(f"Progress: {status.progress}")
+    
+    asyncio.run(main())
+    ```
+    
+    This enables concurrent processing of multiple documents, significantly improving throughput for batch operations.
+  </Accordion>
+  
+  <Accordion title="How do I optimize for RAG applications?">
+    Lexa is designed specifically for RAG workflows with built-in vector database optimization:
+    
+    ```python
+    # Get optimally sized chunks for embeddings
+    chunks = documents.get_all_text_chunks(
+        target_size=500,  # Optimal for most embedding models
+        overlap=50,       # Maintain context between chunks
+        include_metadata=True  # Rich metadata for filtering
+    )
+    
+    # Direct integration with vector databases
+    for chunk in chunks:
+        # Each chunk includes source document, page numbers,
+        # element types, and confidence scores
+        vector_db.upsert(
+            id=chunk.id,
+            vector=embed(chunk.content),
+            metadata=chunk.metadata
+        )
+    ```
+    
+    We provide pre-built integration examples for Pinecone, Weaviate, ChromaDB, and Qdrant.
+  </Accordion>
+  
+  <Accordion title="What cloud storage integrations are available?">
+    Lexa integrates with 7+ major cloud storage platforms:
+    
+    - **Amazon S3**: Direct parsing from S3 buckets and folders
+    - **Microsoft SharePoint**: Sites, drives, and document libraries
+    - **Google Drive**: Files and folders with permission management
+    - **Box**: Enterprise file storage with advanced metadata
+    - **Dropbox**: Personal and business accounts
+    - **Salesforce**: Document attachments and files
+    - **Coming Soon**: Azure Blob, OneDrive, Notion
+    
+    ```python
+    # Parse entire S3 folder
+    documents = client.parse_s3_folder(
+        bucket="my-bucket",
+        folder="documents/",
+        recursive=True
+    )
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Performance and Scaling
+
+<AccordionGroup>
+  <Accordion title="What are Lexa's performance benchmarks?">
+    Lexa delivers industry-leading performance across all metrics:
+    
+    **Speed**:
+    - Simple PDFs: < 1 second
+    - Complex documents (100+ pages): 15-45 seconds
+    - Batch processing: 10-50 documents/minute
+    - Concurrent async: 100+ documents/minute
+    
+    **Accuracy**:
+    - Text extraction: 99.9%
+    - Table structure: 92.5%
+    - Metadata extraction: 99.2%
+    - Multi-format consistency: 99.7%
+    
+    **Reliability**:
+    - API uptime: 99.9% SLA
+    - Auto-retry on failures: 3 attempts with exponential backoff
+    - Rate limiting: 1000 requests/minute (enterprise plans)
+  </Accordion>
+  
+  <Accordion title="How does Lexa handle large-scale document processing?">
+    Lexa is built for enterprise scale with several optimization strategies:
+    
+    **Horizontal Scaling**: Our API automatically scales to handle spikes in demand  
+    **Batch Processing**: Process up to 100 documents per API call  
+    **Async Processing**: Non-blocking operations with progress callbacks  
+    **Caching**: Intelligent caching reduces processing time for similar documents  
+    **Load Balancing**: Global infrastructure ensures low latency worldwide  
+    
+    ```python
+    # Batch processing example
+    large_batch = ["doc1.pdf", "doc2.docx", ...] # 100+ files
+    documents = await client.parse(
+        large_batch,
+        progress_callback=lambda status: print(f"Progress: {status.completed}/{status.total}")
+    )
+    ```
+  </Accordion>
+  
+  <Accordion title="What are the API rate limits and pricing?">
+
+    See [pricing](https://cerevox.ai/pricing)
+
+    **Free Plan** (Free):
+    - 1000 Documents Parsed
+    - Community support
+
+    **Dev Plan** ($5/month):
+    - Start with 100 pages
+    - $0.05 per additional page
+    - 100 requests/minute
+    - Email support
+    - Vector DB integrations
+    
+    **Pro Plan** ($99/month):
+    - Start with 10,000 pages
+    - $0.01 per additional page 
+    - 3x cost for advanced processing
+    - 100 requests/minute
+    - Email support
+    - Vector DB integrations
+    
+    **Enterprise Plan** (Custom):
+    - Unlimited pages
+    - 1000+ requests/minute
+    - Dedicated support
+    - On-premise deployment
+    - Custom integrations
+    
+    All plans include the same high accuracy and all file format support.
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Features
+
+<AccordionGroup>
+  <Accordion title="How does table extraction work in complex documents?">
+    Lexa uses advanced computer vision and ML models to extract tables with high fidelity:
+    
+    ```python
+    documents = client.parse("financial_report.pdf")
+    
+    # Access extracted tables
+    for doc in documents:
+        for table in doc.tables:
+            print(f"Table on page {table.page_number}")
+            print(f"Dimensions: {table.rows}x{table.columns}")
+            
+            # Export to pandas DataFrame
+            df = table.to_pandas()
+            
+            # Or get raw structured data
+            data = table.to_dict()
+    ```
+    
+    Features include:
+    - **Structure preservation**: Maintains cell relationships and formatting
+    - **Multi-page tables**: Automatically combines split tables
+    - **Header detection**: Identifies and preserves table headers
+    - **Data type inference**: Automatically detects numbers, dates, etc.
+  </Accordion>
+  
+  <Accordion title="Can I customize the parsing behavior for my use case?">
+    Lexa offers several processing modes and customization options:
+    
+    ```python
+    from cerevox import ProcessingMode
+    
+    # Standard processing (fastest)
+    docs = client.parse("document.pdf", mode=ProcessingMode.DEFAULT)
+    
+    # Advanced processing (highest accuracy)
+    docs = client.parse("document.pdf", mode=ProcessingMode.ADVANCED)
+    
+    # Custom chunking parameters
+    chunks = docs.get_text_chunks(
+        target_size=1000,      # Larger chunks for long-form content
+        tolerance=0.2,         # 20% size variance allowed
+        respect_boundaries=True, # Don't break sentences/paragraphs
+        include_tables=True    # Include table content in chunks
+    )
+    ```
+    
+    Contact our team for specialized processing modes for specific document types or industries.
+  </Accordion>
+  
+  <Accordion title="What security and compliance features does Lexa provide?">
+    Security is built into every aspect of Lexa:
+    
+    **Data Security**:
+    - TLS 1.3 encryption for all API communications
+    - Documents processed in isolated environments
+    - No document storage - processed and deleted immediately
+    - SOC 2 Type II certified infrastructure
+    
+    **Access Control**:
+    - API key authentication with rotation support
+    - Role-based access control (enterprise plans)
+    - IP whitelisting and VPC connectivity options
+    - Audit logging for all API operations
+    
+    **Compliance**:
+    - GDPR compliant data processing
+    - HIPAA compliance available (enterprise)
+    - Regional data processing options (US, EU, Asia)
+    - On-premise deployment for maximum security
+  </Accordion>
+</AccordionGroup>
+
+## Support and Community
+
+<AccordionGroup>
+  <Accordion title="What support options are available?">
+    We provide comprehensive support across multiple channels:
+    
+    **Community Support**:
+    - [Discord Community](https://discord.gg/cerevox) - Real-time chat with developers
+    - [GitHub Discussions](https://github.com/CerevoxAI/cerevox-python/discussions) - Technical discussions
+    - [Stack Overflow](https://stackoverflow.com/questions/tagged/cerevox) - Q&A with the community
+    
+    **Direct Support**:
+    - Email support for Pro and Enterprise customers
+    - Video calls for Enterprise customers
+    - Dedicated Slack channels for large deployments
+    - 24/7 support for mission-critical applications
+  </Accordion>
+  
+  <Accordion title="How can I stay updated on new features and improvements?">
+    Stay connected with the Cerevox developer community:
+    
+    - **[GitHub Repository](https://github.com/CerevoxAI/cerevox-python)**: Star for updates and releases
+    - **[Discord Community](https://discord.gg/cerevox)**: Join 1000+ developers
+    - **[Documentation](https://docs.cerevox.ai)**: Always up-to-date guides and examples
+    
+    We ship new features and improvements every 2-3 weeks based on community feedback.
   </Accordion>
 </AccordionGroup>

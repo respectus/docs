@@ -1,0 +1,457 @@
+---
+title: "Code Examples"
+description: "Copy-paste ready examples with real data - not toy examples"
+---
+
+## Quick Start Examples
+
+### Parse Your First Document
+
+<CodeGroup>
+```python Single File - Real Output
+from cerevox import Lexa
+
+# Initialize the client
+client = Lexa()  # Uses CEREVOX_API_KEY from environment
+
+# Parse a financial document
+documents = client.parse("invoice.pdf")
+
+# Real output - not just {...}
+doc = documents[0]
+print(f"✅ Extracted {len(doc.content)} characters")
+print(f"📊 Found {len(doc.tables)} tables")
+print(f"💰 Content preview: {doc.content[:200]}...")
+
+# Returns actual structured data:
+# "Invoice #INV-2024-001
+#  Bill To: Acme Corporation
+#  Amount Due: $1,299.99
+#  Due Date: 2024-02-15"
+```
+
+```python Multiple Files - Batch Processing
+from cerevox import Lexa
+
+client = Lexa()
+
+# Process multiple documents efficiently
+files = [
+    "contracts/service-agreement.pdf",
+    "invoices/january-2024.xlsx", 
+    "reports/quarterly-analysis.docx"
+]
+
+documents = client.parse(files)
+
+# See what you got
+print(f"✅ Processed {len(documents)} documents")
+for i, doc in enumerate(documents, 1):
+    print(f"  📄 Document {i}: {len(doc.content)} chars, {len(doc.tables)} tables")
+
+# Real results ready for your application
+```
+
+```python Test Content - Perfect for Development
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse raw content (great for testing)
+test_content = b"""
+INVOICE #12345
+Date: 2024-01-15
+Bill To: Tech Startup Inc.
+Amount: $2,499.99
+Description: AI Consulting Services
+"""
+
+documents = client.parse(test_content)
+print(f"✅ Test successful: {documents[0].content}")
+
+# Returns exactly what you put in, structured and ready
+```
+</CodeGroup>
+
+## Real-World Use Cases
+
+### Financial Document Processing
+
+<CodeGroup>
+```python Invoice Extraction
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse financial documents
+documents = client.parse([
+    "invoices/q1-2024-invoices.pdf",
+    "statements/bank-statement.pdf",
+    "receipts/expense-receipts.xlsx"
+])
+
+# Extract key financial data
+for doc in documents:
+    # Lexa preserves financial formatting
+    print(f"Document: {doc.title}")
+    print(f"Tables found: {len(doc.tables)}")
+    
+    # Tables contain actual structured data
+    if doc.tables:
+        table = doc.tables[0]  # First table
+        print(f"Financial data: {table.rows} rows x {table.columns} columns")
+        # Each table has real data, not placeholders
+
+# Ready for accounting software integration
+```
+
+```python Contract Analysis
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse legal contracts
+documents = client.parse("contracts/service-agreement.pdf")
+
+doc = documents[0]
+print(f"Contract length: {len(doc.content)} characters")
+print(f"Key sections preserved: {len(doc.sections)} sections")
+
+# Lexa maintains document structure for legal analysis
+# Perfect for contract review workflows
+```
+</CodeGroup>
+
+### Research & Analysis
+
+<CodeGroup>
+```python Academic Papers
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse research documents
+documents = client.parse([
+    "papers/ai-research-2024.pdf",
+    "reports/market-analysis.docx",
+    "data/survey-results.xlsx"
+])
+
+# Get structured research data
+for doc in documents:
+    print(f"📚 Paper: {doc.title}")
+    print(f"📖 Content: {len(doc.content)} chars")
+    print(f"📊 Data tables: {len(doc.tables)} tables")
+    print(f"🖼️  Figures: {len(doc.images)} images")
+
+# All formatting and structure preserved
+```
+
+```python Market Reports
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse market intelligence documents
+documents = client.parse("reports/industry-report-2024.pdf")
+
+doc = documents[0]
+print(f"Report sections: {len(doc.sections)}")
+print(f"Market data tables: {len(doc.tables)}")
+
+# Extract market insights with structure intact
+# Ready for business intelligence tools
+```
+</CodeGroup>
+
+## Vector Database Integration
+
+### RAG Application Ready
+
+<CodeGroup>
+```python Optimized for Embeddings
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse documents for RAG
+documents = client.parse([
+    "knowledge-base/product-docs.pdf",
+    "support/troubleshooting.docx"
+])
+
+# Get perfectly sized chunks
+chunks = documents.get_all_text_chunks(
+    target_size=500,        # Perfect for most embedding models
+    overlap_size=50,        # Prevents context loss
+    include_metadata=True   # Rich metadata included
+)
+
+print(f"🔗 Ready for embedding: {len(chunks)} chunks")
+
+# Each chunk is optimized for vector databases
+for chunk in chunks[:2]:  # Show first 2
+    print(f"\nChunk preview: {chunk.content[:100]}...")
+    print(f"Metadata: page={chunk.page_number}, source={chunk.source_file}")
+    # Rich metadata for better retrieval
+```
+
+```python Direct Vector DB Integration  
+from cerevox import Lexa
+import pinecone  # or your preferred vector DB
+
+client = Lexa()
+
+# Parse and chunk in one step
+documents = client.parse("knowledge-base/")
+chunks = documents.get_all_text_chunks(target_size=500)
+
+# Ready for your vector database
+vectors = []
+for chunk in chunks:
+    # Each chunk has everything you need
+    vectors.append({
+        'id': chunk.id,
+        'values': your_embedding_model(chunk.content),  # Your embedding
+        'metadata': {
+            'text': chunk.content,
+            'page': chunk.page_number,
+            'source': chunk.source_file,
+            # Rich metadata preserved
+        }
+    })
+
+# Upload to vector database
+# pinecone.upsert(vectors=vectors)
+print(f"✅ {len(vectors)} vectors ready for database")
+```
+
+```python Semantic Search Ready
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse FAQ documents  
+documents = client.parse("support/faq-database.pdf")
+
+# Get semantic search ready chunks
+chunks = documents.get_all_text_chunks(
+    target_size=300,        # Shorter for FAQ
+    preserve_questions=True # Keep Q&A structure
+)
+
+print(f"🔍 Search ready: {len(chunks)} FAQ chunks")
+
+# Each chunk maintains question-answer structure
+# Perfect for semantic search applications
+```
+</CodeGroup>
+
+## Different Input Methods
+
+### File Processing
+
+<CodeGroup>
+```python Local Files
+from cerevox import Lexa
+from pathlib import Path
+
+client = Lexa()
+
+# Single file
+doc = client.parse("reports/annual-report.pdf")[0]
+print(f"✅ Parsed: {len(doc.content)} characters")
+
+# Multiple files with Path objects
+docs_folder = Path("documents")
+pdf_files = list(docs_folder.glob("*.pdf"))
+documents = client.parse(pdf_files)
+print(f"✅ Processed {len(documents)} PDF files")
+
+# Mixed file types - Lexa handles them all
+mixed_files = [
+    "data.xlsx",      # Excel spreadsheet
+    "report.docx",    # Word document  
+    "slides.pptx",    # PowerPoint
+    "data.csv",       # CSV file
+    "webpage.html"    # HTML file
+]
+documents = client.parse(mixed_files)
+print(f"✅ Processed {len(documents)} mixed format files")
+```
+
+```python Raw Content Processing
+from cerevox import Lexa
+from io import BytesIO
+
+client = Lexa()
+
+# Process bytes directly
+with open("document.pdf", "rb") as f:
+    content = f.read()
+
+documents = client.parse(content)
+print("✅ Processed raw bytes")
+
+# Process file-like objects
+stream = BytesIO(content)
+documents = client.parse(stream)
+print("✅ Processed from stream")
+
+# Perfect for web uploads and API integrations
+```
+</CodeGroup>
+
+### URL Processing
+
+<CodeGroup>
+```python Single URL
+from cerevox import Lexa
+
+client = Lexa()
+
+# Parse from web URLs
+url = "https://www.sec.gov/Archives/edgar/data/320193/000032019323000077/aapl-20230930.htm"
+documents = client.parse_urls(url)
+
+print(f"✅ Downloaded and parsed SEC filing")
+print(f"📄 Content: {len(documents[0].content)} characters")
+print(f"📊 Tables: {len(documents[0].tables)} financial tables")
+
+# Real SEC data, properly structured
+```
+
+```python Multiple URLs - Concurrent Processing
+from cerevox import Lexa
+
+client = Lexa()
+
+# Process multiple URLs efficiently
+urls = [
+    "https://example.com/quarterly-report-q1.pdf",
+    "https://example.com/quarterly-report-q2.pdf", 
+    "https://example.com/quarterly-report-q3.pdf"
+]
+
+documents = client.parse_urls(urls)
+print(f"✅ Processed {len(documents)} quarterly reports")
+
+# All downloaded and parsed concurrently
+for i, doc in enumerate(documents):
+    print(f"  Q{i+1} Report: {len(doc.content)} chars, {len(doc.tables)} tables")
+```
+</CodeGroup>
+
+## Processing Modes & Options
+
+### Performance Optimization
+
+<CodeGroup>
+```python Processing Modes
+from cerevox import Lexa, ProcessingMode
+
+client = Lexa()
+
+# Default mode - fast and efficient (recommended)
+documents = client.parse(
+    "standard-document.pdf",
+    mode=ProcessingMode.DEFAULT  # Fast processing for most use cases
+)
+print("✅ Fast processing complete")
+
+# Advanced mode - maximum accuracy
+documents = client.parse(
+    "complex-report.pdf", 
+    mode=ProcessingMode.ADVANCED  # Use for complex documents requiring maximum accuracy
+)
+print("✅ Advanced processing complete")
+```
+
+```python Progress Tracking
+from cerevox import Lexa
+
+def progress_callback(status):
+    print(f"📊 Status: {status.status}")
+    if hasattr(status, 'progress'):
+        print(f"📈 Progress: {status.progress}%")
+
+client = Lexa()
+
+# Track progress for large jobs
+documents = client.parse(
+    ["large-file1.pdf", "large-file2.pdf"],
+    progress_callback=progress_callback,
+    timeout=300.0,      # 5 minute timeout
+    poll_interval=5.0   # Check every 5 seconds
+)
+
+print("✅ Large batch processing complete")
+```
+</CodeGroup>
+
+### Error Handling
+
+<CodeGroup>
+```python Robust Error Handling
+from cerevox import Lexa, LexaError
+
+client = Lexa()
+
+def safe_parse(files):
+    try:
+        documents = client.parse(files)
+        print(f"✅ Successfully parsed {len(documents)} documents")
+        return documents
+        
+    except LexaError as e:
+        print(f"❌ Lexa API error: {e.message}")
+        if "authentication" in e.message.lower():
+            print("💡 Check your API key")
+        elif "timeout" in e.message.lower():
+            print("💡 Try smaller batches or increase timeout")
+        return None
+        
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        return None
+
+# Use with any files
+documents = safe_parse(["document1.pdf", "document2.docx"])
+```
+
+```python Retry Logic for Production
+from cerevox import Lexa, LexaError
+import time
+
+client = Lexa()
+
+def parse_with_retry(files, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            documents = client.parse(files)
+            print(f"✅ Success on attempt {attempt + 1}")
+            return documents
+            
+        except LexaError as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"⏳ Attempt {attempt + 1} failed, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                print(f"❌ Failed after {max_retries} attempts: {e.message}")
+                raise
+                
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+            raise
+
+# Production-ready parsing
+documents = parse_with_retry(["critical-document.pdf"])
+```
+</CodeGroup>
+
+---
+
+<Tip>
+  **Ready for more?** Check out [async processing](/examples/async-operations) for handling multiple documents concurrently, or [cloud integrations](/examples/cloud-integrations) for S3, SharePoint, and more.
+</Tip> 

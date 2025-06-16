@@ -1,62 +1,307 @@
 ---
 title: 'Quickstart'
-description: 'Start exploring your data in minutes with Cerevox'
 ---
 
-## Getting Started
+# Parse Your First Document in 3 Minutes ⚡
+
+This quickstart gets you from zero to parsing documents with Lexa. By the end, you'll have made your first successful API call.
+
+<Note>
+  **Requirements:** Python 3.9+ • 3 minutes of your time
+</Note>
+
+## Step 1: Installation (30 seconds)
+
+<CodeGroup>
+```bash Terminal
+pip install cerevox
+```
+
+```bash Alternative Methods
+# Using conda
+conda install -c conda-forge cerevox
+
+# Using poetry  
+poetry add cerevox
+
+# Using pipenv
+pipenv install cerevox
+```
+</CodeGroup>
+
+## Step 2: Get API Key (30 seconds)
 
 <Steps>
-  <Step title="Sign Up for a User account">
-    Register and create your personal user account with [Cerevox](https://cerevox.ai/app)
+  <Step title="Get your API key">
+    Visit [cerevox.ai/lexa](https://cerevox.ai/lexa) and sign up for your free API key
   </Step>
-  <Step title="Connect Data">
-     Upload your documents or connect a folder containing multiple files to your account. Our platform can handle a variety of file types and sizes, allowing you to work with all of your data in one place.
+  <Step title="Copy the key">
+    Save your API key - you'll need it in the next step
   </Step>
-  <Step title="Ask Questions">
-    Once your data is uploaded, simply type in your question in the search bar. Cerevox will instantly search across your entire dataset to find the most accurate and relevant sources to answer your query.
-  </Step>
-  <Step title="Explore Answers and Sources">
-    Get an accurate, detailed answer sourced directly from your data. Cerevox not only provides the answer but also shows you the sources that contributed to the response, helping you verify and understand the context.
-  </Step> 
 </Steps>
 
-### Exploring Data
+## Step 3: Authentication Setup (30 seconds)
+
+<Tabs>
+  <Tab title="Environment Variable (Recommended)">
+    ```bash
+    export CEREVOX_API_KEY="your-api-key-here"
+    ```
+  </Tab>
+  <Tab title="Direct in Code">
+    ```python
+    from cerevox import Lexa
+    
+    client = Lexa(api_key="your-api-key-here")
+    ```
+  </Tab>
+  <Tab title=".env File">
+    ```bash .env
+    CEREVOX_API_KEY=your-api-key-here
+    ```
+    ```python
+    import os
+    from dotenv import load_dotenv
+    from cerevox import Lexa
+    
+    load_dotenv()
+    client = Lexa()  # Automatically reads from environment
+    ```
+  </Tab>
+</Tabs>
+
+## Step 4: First API Call (60 seconds)
+
+Copy and run this code to parse your first document:
+
+<Tabs>
+  <Tab title="Parse a File">
+    ```python
+    from cerevox import Lexa
+    
+    # Initialize client (uses CEREVOX_API_KEY from environment)
+    client = Lexa()
+    
+    # Parse a local file - replace with your file path
+    documents = client.parse(["path/to/your/document.pdf"])
+    
+    # See what you got back
+    doc = documents[0]
+    print(f"✅ Success! Extracted {len(doc.content)} characters")
+    print(f"📊 Found {len(doc.tables)} tables")
+    print(f"📄 Content preview: {doc.content[:200]}...")
+    
+    # That's it! Your document is now structured data
+    ```
+  </Tab>
+  
+  <Tab title="Parse Text Content">
+    ```python
+    from cerevox import Lexa
+    
+    # Parse raw text content (perfect for testing)
+    client = Lexa()
+    content = b"Invoice #12345\nTotal: $1,299.99\nVendor: Acme Corp"
+    
+    documents = client.parse(content)
+    doc = documents[0]
+    
+    print(f"✅ Parsed: {doc.content}")
+    # Returns: "Invoice #12345\nTotal: $1,299.99\nVendor: Acme Corp"
+    
+    # Ready for your application!
+    ```
+  </Tab>
+  
+  <Tab title="Parse from URL">
+    ```python
+    from cerevox import Lexa
+    
+    client = Lexa()
+    
+    # Parse documents directly from URLs
+    documents = client.parse_urls([
+        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+    ])
+    
+    print(f"✅ Parsed {len(documents)} documents from URL")
+    print(f"📄 Content: {documents[0].content[:100]}...")
+    ```
+  </Tab>
+</Tabs>
+
+## Step 5: Test Your Setup (30 seconds)
+
+Run this verification script to confirm everything works:
+
+```python
+from cerevox import Lexa, LexaError
+
+def verify_setup():
+    try:
+        client = Lexa()
+        
+        # Quick test with sample content
+        test_content = b"Test document for Lexa API verification."
+        documents = client.parse(test_content)
+        
+        if documents and len(documents) > 0:
+            print("🎉 Perfect! Lexa is working correctly.")
+            print(f"📄 Test result: {documents[0].content}")
+            return True
+    
+    except LexaError as e:
+        print(f"❌ API Error: {e.message}")
+        print("💡 Check your API key and try again")
+        return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+# Run verification
+if verify_setup():
+    print("\n✅ You're ready to parse documents with Lexa!")
+```
+
+<Check>
+  **You're Ready!** 🎉 Lexa is configured and working. Start parsing your documents!
+</Check>
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card
+    title="Real Examples"
+    icon="laptop-code"
+    href="/examples/basic-usage"
+  >
+    Copy-paste ready examples with real data
+  </Card>
+  <Card
+    title="Async Processing"
+    icon="zap"
+    href="/examples/async-operations"
+  >
+    Process multiple documents concurrently (recommended)
+  </Card>
+  <Card
+    title="Vector DB Integration"
+    icon="database"
+    href="/guides/vector-database-integration"
+  >
+    Get chunks ready for your RAG applications
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api/client"
+  >
+    Complete method signatures and parameters
+  </Card>
+</CardGroup>
+
+## Common Next Steps
 
 <AccordionGroup>
-  <Accordion icon="magnifying-glass" title="Ask Questions">
-    Start asking questions based on your data. Whether it’s about specific details, summaries, or trends, Cerevox efficiently analyzes the entire dataset and provides insightful answers.  
-    **Example Question**: "What are the key financial trends in the last 10 years of these documents?"
-    Once you ask your question, Cerevox finds the most relevant information across all connected documents and delivers an accurate answer.
+  <Accordion icon="bolt" title="Async Processing (Recommended)">
+    ```python
+    import asyncio
+    from cerevox import AsyncLexa
+    
+    async def parse_multiple():
+        async with AsyncLexa() as client:
+            # Process multiple files concurrently - much faster!
+            documents = await client.parse([
+                "report1.pdf", 
+                "report2.docx",
+                "data.xlsx"
+            ])
+            
+            print(f"✅ Processed {len(documents)} documents")
+            
+            # Get vector DB ready chunks
+            chunks = documents.get_all_text_chunks(target_size=500)
+            print(f"🔗 Ready for embedding: {len(chunks)} chunks")
+    
+    asyncio.run(parse_multiple())
+    ```
   </Accordion>
-  <Accordion icon="database" title="View Your Sources">
-    Cerevox doesn’t just give you answers — it shows you exactly where the information is coming from. Each answer is linked to the specific files or sections in your data that were used to derive it.
-    This transparency ensures that you can quickly verify the response and make confident decisions based on your data.
+  
+  <Accordion icon="cloud" title="Cloud Storage Integration">
+    ```python
+    # Parse from Amazon S3
+    documents = client.parse_s3_folder(
+        bucket_name="my-documents",
+        folder_path="invoices/"
+    )
+    
+    # Parse from SharePoint
+    documents = client.parse_sharepoint_folder(
+        site_id="your-site-id",
+        drive_id="your-drive-id", 
+        folder_path="Documents"
+    )
+    
+    print(f"✅ Processed {len(documents)} documents from cloud storage")
+    ```
   </Accordion>
-  <Accordion icon="folder" title="Manage Your Data">
-    Easily manage your uploaded documents and data sets. You can add new files, organize your data into folders, and access everything through a simple and intuitive UI.  
-    **Tip**: Keep your data up to date by uploading new versions of your documents directly to your Cerevox account, so you always have the latest information at your fingertips.  
-    <sup>Coming Soon!</sup>
-  </Accordion>
-  <Accordion icon="cloud" title="Collaborate & Share">
-    Invite team members to access your data and collaborate on analysis. You can share specific results or entire datasets for collective insights. This feature is great for teams working on business analysis, legal review, or research projects.  
-    <sup>Coming Soon!</sup>
+  
+  <Accordion icon="database" title="Vector Database Ready">
+    ```python
+    # Parse and get RAG-optimized chunks
+    documents = client.parse(["document.pdf"])
+    
+    chunks = documents.get_all_text_chunks(
+        target_size=500,        # Perfect for most embeddings
+        overlap_size=50,        # Prevents context loss
+        include_metadata=True   # Rich metadata included
+    )
+    
+    # Each chunk is ready for your vector database
+    for chunk in chunks[:3]:
+        print(f"Chunk: {chunk.content[:100]}...")
+        print(f"Metadata: {chunk.metadata}")
+    ```
   </Accordion>
 </AccordionGroup>
 
-### Advanced Features (Coming Soon!)
+## Having Issues?
 
 <AccordionGroup>
-  <Accordion icon="quinscape" title="API Access">
-    Our powerful API will allow you to integrate Cerevox’s capabilities into your own services, automating the process of uploading files, querying data, and retrieving answers programmatically. Stay tuned for detailed API documentation and access instructions.
+  <Accordion icon="key" title="Authentication Problems">
+    **Error:** `Authentication failed` or `Invalid API key`
+    
+    **Quick fixes:**
+    - Double-check your API key from [cerevox.ai/lexa](https://cerevox.ai/lexa)
+    - Verify `CEREVOX_API_KEY` environment variable is set correctly  
+    - Remove any extra spaces or quotes around the key
+    - Try passing the key directly: `Lexa(api_key="your-key")`
   </Accordion>
-  <Accordion icon="python" title="Python Integration">
-    Integrate Cerevox with your Python workflows to automate data analysis and answer generation directly from your code. This feature will be coming soon, and we’ll provide documentation to get you started.
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Error:** `Connection timeout` or `Network error`
+    
+    **Quick fixes:**
+    - Check internet connection
+    - Increase timeout: `client.parse(files, timeout=120.0)`
+    - Verify firewall allows HTTPS connections to `data.cerevox.ai`
+    - Test with smaller files first
   </Accordion>
-  <Accordion icon="node-js" iconType="regular" color="#2ab573" title="Node.js Integration">
-    Stay tuned for our Node.js SDK, which will allow you to programmatically access Cerevox’s powerful capabilities from within your applications.
-  </Accordion>
-  <Accordion icon="terminal" title="CLI Tool">
-    The Cerevox Command Line Interface will allow you to interact with your data and ask questions directly from the terminal. We’ll be rolling this out soon.
+  
+  <Accordion icon="file-exclamation" title="File Issues">
+    **Error:** `File not found` or parsing errors
+    
+    **Quick fixes:**
+    - Verify file path is correct: `os.path.exists("your-file.pdf")`
+    - Check file permissions (must be readable)
+    - Supported formats: PDF, DOCX, XLSX, PPTX, HTML, CSV, TXT, and more
+    - Try with the test content example above first
   </Accordion>
 </AccordionGroup>
+
+---
+
+<Tip>
+  **Ready to build?** Check out our [code examples](/examples/basic-usage) or join the [Discord community](https://discord.gg/cerevox) for help.
+</Tip>
 

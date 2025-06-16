@@ -1,0 +1,162 @@
+---
+title: Overview
+---
+
+**Lexa transforms unstructured documents into clean, structured data with enterprise-grade reliability.**
+
+Perfect for RAG applications, document analysis, data extraction, and vector database preparation.
+
+<CardGroup cols={2}>
+  <Card
+    title="10x Faster Processing"
+    icon="rocket"
+    color="#ea5a0c"
+  >
+    Industry-leading performance with native async support and concurrent processing
+  </Card>
+  <Card
+    title="SOTA Accuracy"
+    icon="bullseye"
+    color="#0285c7"
+  >
+    Cutting-edge ML models deliver the highest accuracy for text and table extraction
+  </Card>
+  <Card
+    title="12+ File Formats"
+    icon="file-lines"
+    color="#16a34a"
+  >
+    PDF, DOCX, PPTX, HTML, CSV, XLSX, and more - all in one unified API
+  </Card>
+  <Card
+    title="Vector DB Ready"
+    icon="database"
+    color="#dc2626"
+  >
+    Optimized chunks with rich metadata, perfect for embedding and retrieval
+  </Card>
+</CardGroup>
+
+## Why Choose Lexa?
+
+<AccordionGroup>
+  <Accordion icon="bolt" title="Enterprise Performance & Scale">
+    - **10x faster** than traditional document parsing solutions
+    - **Native async support** with concurrent document processing  
+    - **Enterprise-grade reliability** with automatic retries and error handling
+    - **Batch processing** capabilities for handling thousands of documents
+  </Accordion>
+  
+  <Accordion icon="brain" title="AI-Powered Extraction">
+    - **SOTA accuracy** with cutting-edge ML models
+    - **Advanced table extraction** preserving structure and formatting
+    - **Smart text chunking** optimized for vector databases and RAG
+    - **Rich metadata extraction** including images, formatting, and document structure
+  </Accordion>
+  
+  <Accordion icon="plug" title="Integration Ready">
+    - **7+ cloud storage** integrations (S3, SharePoint, Google Drive, Box, Dropbox)
+    - **Framework agnostic** - works seamlessly with Django, Flask, FastAPI
+    - **Vector database optimized** chunks ready for your RAG applications
+    - **Production ready** with comprehensive error handling and monitoring
+  </Accordion>
+</AccordionGroup>
+
+## Get Started in 60 Seconds
+
+<CodeGroup>
+```bash Installation
+pip install cerevox
+```
+
+```python Basic Usage
+from cerevox import Lexa
+
+# Initialize client
+client = Lexa(api_key="your-api-key")
+
+# Parse a document - it's that simple!
+documents = client.parse(["invoice.pdf"])
+
+# Real output - not just {...}
+print(f"Extracted {len(documents[0].content)} characters")
+print(f"Found {len(documents[0].tables)} tables")
+# Returns structured data ready for your application
+```
+
+```python Async (Recommended)
+import asyncio
+from cerevox import AsyncLexa
+
+async def main():
+    async with AsyncLexa(api_key="your-api-key") as client:
+        # Process multiple documents concurrently
+        documents = await client.parse(["document.pdf", "report.docx"])
+        
+        # Get chunks optimized for vector databases
+        chunks = documents.get_all_text_chunks(target_size=500)
+        print(f"Ready for embedding: {len(chunks)} chunks")
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+<Note>
+  **Requirements:** Python 3.9+ • [Get your API key](https://cerevox.ai/lexa) from Cerevox
+</Note>
+
+## Real-World Use Cases
+
+<CardGroup cols={2}>
+  <Card title="RAG Applications" icon="messages" href="/usecases/knowledge">
+    Extract and chunk documents for retrieval-augmented generation systems
+  </Card>
+  <Card title="Financial Analysis" icon="chart-line" href="/usecases/financial">
+    Parse 10-K filings, annual reports, and financial statements with precision
+  </Card>
+  <Card title="Legal Research" icon="scale-balanced" href="/usecases/legal">
+    Analyze contracts, case files, and legal discovery documents
+  </Card>
+  <Card title="Market Intelligence" icon="trending-up" href="/usecases/market">
+    Aggregate insights from market reports and research papers
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart Guide"
+    icon="play"
+    href="/welcome/quickstart"
+  >
+    Authenticate and make your first API call in under 3 minutes
+  </Card>
+  <Card
+    title="Code Examples"
+    icon="laptop-code"
+    href="/examples/basic-usage"
+  >
+    Copy-paste ready examples with real data
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api/client"
+  >
+    Complete method signatures and parameter documentation
+  </Card>
+  <Card
+    title="Vector DB Integration"
+    icon="database"
+    href="/guides/vector-database-integration"
+  >
+    Ready-to-use patterns for popular vector databases
+  </Card>
+</CardGroup>
+
+---
+
+<Tip>
+  **Ready to parse?** Test Lexa instantly in our [Demo](https://cerevox.ai/lexa) or join our [Discord community](https://discord.gg/cerevox) for support.
+</Tip>

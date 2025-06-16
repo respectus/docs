@@ -1,0 +1,395 @@
+---
+title: 'Authentication'
+description: 'All authentication methods for Cerevox Lexa API with copy-paste examples'
+---
+
+<Note>
+  **Get your API key** from [cerevox.ai/lexa](https://cerevox.ai/lexa) - it's free to start.
+</Note>
+
+## All Authentication Methods
+
+<Tabs>
+  <Tab title="Environment Variable (Recommended)">
+    **Best for:** Production applications and general use
+
+    ```bash
+    # Set your API key
+    export CEREVOX_API_KEY="your-api-key-here"
+    ```
+
+    ```python
+    from cerevox import Lexa
+
+    # Client automatically reads from CEREVOX_API_KEY
+    client = Lexa()
+    
+    # Test it works
+    documents = client.parse(b"Test authentication")
+    print("✅ Authenticated successfully!")
+    ```
+
+    <Check>Most secure method - keeps keys out of your code</Check>
+  </Tab>
+
+  <Tab title="Direct in Code">
+    **Best for:** Quick testing and prototyping
+
+    ```python
+    from cerevox import Lexa
+
+    # Pass API key directly
+    client = Lexa(api_key="your-api-key-here")
+    
+    # For async operations
+    from cerevox import AsyncLexa
+    
+    async def main():
+        async with AsyncLexa(api_key="your-api-key-here") as client:
+            documents = await client.parse(["document.pdf"])
+    ```
+
+    <Warning>Don't hardcode keys in production - use environment variables instead</Warning>
+  </Tab>
+
+  <Tab title=".env File">
+    **Best for:** Local development
+
+    ```bash .env
+    # Create .env file in your project root
+    CEREVOX_API_KEY=your-api-key-here
+    ```
+
+    ```python
+    import os
+    from dotenv import load_dotenv
+    from cerevox import Lexa
+
+    # Load .env file
+    load_dotenv()
+
+    # Client reads from environment
+    client = Lexa()
+    ```
+
+    ```bash
+    # Install python-dotenv first
+    pip install python-dotenv
+    ```
+  </Tab>
+
+  <Tab title="Configuration File">
+    **Best for:** Complex applications
+
+    ```json config.json
+    {
+      "cerevox": {
+        "api_key": "your-api-key-here",
+        "timeout": 120,
+        "max_retries": 3
+      }
+    }
+    ```
+
+    ```python
+    import json
+    from cerevox import Lexa
+
+    with open("config.json") as f:
+        config = json.load(f)
+
+    client = Lexa(
+        api_key=config["cerevox"]["api_key"],
+        timeout=config["cerevox"]["timeout"],
+        max_retries=config["cerevox"]["max_retries"]
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Test Your Authentication
+
+Copy and run this to verify your setup works:
+
+<CodeGroup>
+```python Quick Test
+from cerevox import Lexa, LexaError
+
+def test_auth():
+    try:
+        client = Lexa()
+        
+        # Test with sample content
+        documents = client.parse(b"Authentication test content")
+        
+        if documents:
+            print("✅ Authentication successful!")
+            print(f"📄 Parsed: {documents[0].content}")
+            return True
+        
+    except LexaError as e:
+        print(f"❌ API Error: {e.message}")
+        if "authentication" in e.message.lower():
+            print("💡 Check your API key at cerevox.ai/lexa")
+        return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+# Run the test
+test_auth()
+```
+
+```python Environment Check
+import os
+
+def check_setup():
+    # Check if API key exists
+    api_key = os.getenv("CEREVOX_API_KEY")
+    
+    if not api_key:
+        print("❌ CEREVOX_API_KEY not found")
+        print("💡 Set it: export CEREVOX_API_KEY='your-key'")
+        return False
+    
+    if len(api_key) < 10:
+        print("❌ API key seems invalid (too short)")
+        return False
+        
+    print(f"✅ API key found: {api_key[:8]}...")
+    return True
+
+check_setup()
+```
+
+```python Async Test  
+import asyncio
+from cerevox import AsyncLexa, LexaError
+
+async def test_async_auth():
+    try:
+        async with AsyncLexa() as client:
+            documents = await client.parse(b"Async test content")
+            
+            if documents:
+                print("✅ Async authentication works!")
+                return True
+                
+    except LexaError as e:
+        print(f"❌ API Error: {e.message}")
+        return False
+
+asyncio.run(test_async_auth())
+```
+</CodeGroup>
+
+## Direct API Usage
+
+Using the REST API directly? Include your API key in the Authorization header:
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://data.cerevox.ai/v0/parse" \
+  -H "Authorization: Bearer your-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "files": ["https://example.com/document.pdf"]  
+  }'
+```
+
+```python requests
+import requests
+
+headers = {
+    "Authorization": "Bearer your-api-key-here",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(
+    "https://data.cerevox.ai/v0/parse",
+    headers=headers,
+    json={"files": ["document.pdf"]}
+)
+
+print(response.json())
+```
+
+```javascript fetch
+const response = await fetch('https://data.cerevox.ai/v0/parse', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key-here',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    files: ['document.pdf']
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</CodeGroup>
+
+## Common Issues & Solutions
+
+<AccordionGroup>
+  <Accordion icon="key" title="Invalid API Key">
+    **Error:** `Authentication failed` or `Invalid API key`
+
+    **Quick fixes:**
+    ```python
+    # Check for extra spaces/quotes
+    import os
+    api_key = os.getenv('CEREVOX_API_KEY', '').strip()
+    print(f"Key length: {len(api_key)}")
+    print(f"First 8 chars: {api_key[:8]}")
+    
+    # Get a fresh key from cerevox.ai/lexa if needed
+    client = Lexa(api_key=api_key)
+    ```
+  </Accordion>
+
+  <Accordion icon="exclamation-circle" title="API Key Not Found">
+    **Error:** `No API key provided`
+
+    **Quick fixes:**
+    ```bash
+    # Check if it's set
+    echo $CEREVOX_API_KEY
+    
+    # Set it (Linux/Mac)
+    export CEREVOX_API_KEY="your-key"
+    
+    # Set it (Windows)
+    set CEREVOX_API_KEY=your-key
+    
+    # Verify in Python
+    import os; print(os.getenv('CEREVOX_API_KEY'))
+    ```
+  </Accordion>
+
+  <Accordion icon="clock" title="Connection Issues">
+    **Error:** `Connection timeout` or network errors
+
+    **Quick fixes:**
+    ```python
+    # Increase timeout
+    client = Lexa(timeout=180.0)
+    
+    # Check proxy settings if needed
+    import os
+    os.environ['HTTPS_PROXY'] = 'http://your-proxy:port'
+    
+    # Test with smaller content first
+    client.parse(b"small test")
+    ```
+  </Accordion>
+
+  <Accordion icon="shield-exclamation" title="Permission Denied">
+    **Error:** `Insufficient permissions` or `Access denied`
+
+    **Quick fixes:**
+    - Check your account status at [cerevox.ai/lexa](https://cerevox.ai/lexa)
+    - Verify your plan includes the features you're using
+    - Check if you've hit rate limits (wait a minute and retry)
+    - Contact [support@cerevox.ai](mailto:support@cerevox.ai) if issues persist
+  </Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Environment Variables" icon="shield-check">
+    Keep API keys out of your code with environment variables
+  </Card>
+  <Card title="Rotate Keys Regularly" icon="refresh">
+    Generate new keys every 90 days for enhanced security
+  </Card>
+  <Card title="Monitor Usage" icon="chart-line">
+    Watch for unusual API usage patterns in your dashboard
+  </Card>
+  <Card title="Least Privilege" icon="lock">
+    Use API keys with only the permissions you need
+  </Card>
+</CardGroup>
+
+## Production Setup Examples
+
+<Tabs>
+  <Tab title="Docker">
+    ```dockerfile
+    FROM python:3.9-slim
+
+    WORKDIR /app
+    COPY requirements.txt .
+    RUN pip install -r requirements.txt
+
+    COPY . .
+    
+    # API key provided at runtime, not in image
+    CMD ["python", "app.py"]
+    ```
+
+    ```bash
+    # Run with API key
+    docker run -e CEREVOX_API_KEY="your-key" my-lexa-app
+    ```
+  </Tab>
+
+  <Tab title="GitHub Actions">
+    ```yaml
+    name: Test Lexa
+    on: [push]
+
+    jobs:
+      test:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v3
+          - uses: actions/setup-python@v4
+            with:
+              python-version: '3.9'
+          - run: pip install cerevox
+          - name: Test Lexa API
+            env:
+              CEREVOX_API_KEY: ${{ secrets.CEREVOX_API_KEY }}
+            run: python test_lexa.py
+    ```
+  </Tab>
+
+  <Tab title="Kubernetes">
+    ```yaml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cerevox-secret
+    type: Opaque
+    stringData:
+      api-key: your-api-key-here
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: lexa-app
+    spec:
+      template:
+        spec:
+          containers:
+          - name: app
+            image: my-lexa-app
+            env:
+            - name: CEREVOX_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cerevox-secret
+                  key: api-key
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+<Tip>
+  **Ready to parse?** Head to the [quickstart guide](/welcome/quickstart) to make your first API call, or check out [code examples](/examples/basic-usage).
+</Tip>

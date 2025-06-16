@@ -1,0 +1,712 @@
+---
+title: "Configuration"
+description: "Complete guide to configuring the Lexa client for optimal performance"
+---
+
+## Client
+
+### Basic Configuration
+
+<CodeGroup>
+```python Basic Setup
+from cerevox import Lexa
+
+# Minimal configuration
+client = Lexa(api_key="your-api-key")
+
+# Full configuration
+client = Lexa(
+    api_key="your-api-key",
+    base_url="https://data.cerevox.ai",
+    timeout=120.0,
+    max_retries=5,
+    retry_delay=2.0,
+    poll_interval=3.0,
+    max_concurrent=10
+)
+```
+
+```python Async Configuration
+from cerevox import AsyncLexa
+
+# Async client with custom configuration
+async with AsyncLexa(
+    api_key="your-api-key",
+    timeout=300.0,
+    max_retries=3,
+    retry_delay=1.0,
+    max_concurrent=20
+) as client:
+    documents = await client.parse(["document.pdf"])
+```
+</CodeGroup>
+
+### Configuration Parameters
+
+<ParamField path="api_key" type="string" required>
+  Your Cerevox API key. Get one at [cerevox.ai/lexa](https://cerevox.ai/lexa)
+</ParamField>
+
+<ParamField path="base_url" type="string" default="https://data.cerevox.ai">
+  Base URL for the Cerevox API. Change for custom endpoints or testing
+</ParamField>
+
+<ParamField path="timeout" type="float" default="60.0">
+  Default timeout for API requests in seconds. Individual operations can override this
+</ParamField>
+
+<ParamField path="max_retries" type="int" default="3">
+  Maximum number of automatic retry attempts for failed requests
+</ParamField>
+
+<ParamField path="retry_delay" type="float" default="1.0">
+  Base delay between retry attempts. Uses exponential backoff
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="2.0">
+  Default interval between job status checks during parsing
+</ParamField>
+
+<ParamField path="max_concurrent" type="int" default="10">
+  Maximum number of concurrent requests (async client only)
+</ParamField>
+
+## Environment Variables
+
+### Standard Environment Variables
+
+<CodeGroup>
+```bash Environment Setup
+# Required
+export CEREVOX_API_KEY="your-api-key"
+
+# Optional Configuration
+export CEREVOX_BASE_URL="https://data.cerevox.ai"
+export CEREVOX_TIMEOUT="120"
+export CEREVOX_MAX_RETRIES="5"
+export CEREVOX_RETRY_DELAY="2.0"
+export CEREVOX_POLL_INTERVAL="3.0"
+export CEREVOX_MAX_CONCURRENT="20"
+
+# Logging Configuration
+export CEREVOX_LOG_LEVEL="INFO"
+export CEREVOX_LOG_FORMAT="json"
+```
+
+```python Using Environment Variables
+import os
+from cerevox import Lexa
+
+# Client automatically uses environment variables
+client = Lexa()
+
+# Override specific settings
+client = Lexa(
+    timeout=float(os.getenv("CUSTOM_TIMEOUT", 60)),
+    max_retries=int(os.getenv("CUSTOM_MAX_RETRIES", 3))
+)
+```
+</CodeGroup>
+
+### Development vs Production
+
+<CodeGroup>
+```bash Development Environment
+# Development settings - more verbose, shorter timeouts
+export CEREVOX_API_KEY="dev-api-key"
+export CEREVOX_BASE_URL="https://dev.cerevox.ai"
+export CEREVOX_TIMEOUT="30"
+export CEREVOX_MAX_RETRIES="2"
+export CEREVOX_LOG_LEVEL="DEBUG"
+```
+
+```bash Production Environment
+# Production settings - optimized for reliability
+export CEREVOX_API_KEY="prod-api-key"
+export CEREVOX_BASE_URL="https://data.cerevox.ai"
+export CEREVOX_TIMEOUT="300"
+export CEREVOX_MAX_RETRIES="5"
+export CEREVOX_RETRY_DELAY="2.0"
+export CEREVOX_LOG_LEVEL="WARNING"
+export CEREVOX_MAX_CONCURRENT="50"
+```
+</CodeGroup>
+
+## Performance Tuning
+
+### Timeout Configuration
+
+<CodeGroup>
+```python Dynamic Timeouts
+import os
+from cerevox import Lexa
+
+def get_optimal_timeout(files):
+    """Calculate optimal timeout based on file characteristics"""
+    if isinstance(files, str):
+        files = [files]
+    
+    total_size = 0
+    for file in files:
+        if isinstance(file, str) and os.path.exists(file):
+            total_size += os.path.getsize(file)
+    
+    # Base timeout + 1 second per MB
+    base_timeout = 60
+    size_timeout = total_size / (1024 * 1024)  # MB
+    return base_timeout + size_timeout
+
+# Usage
+client = Lexa(api_key="your-api-key")
+files = ["large-document.pdf", "report.docx"]
+optimal_timeout = get_optimal_timeout(files)
+
+documents = client.parse(
+    files,
+    timeout=optimal_timeout,
+    poll_interval=min(5.0, optimal_timeout / 20)
+)
+```
+
+```python Processing Mode Timeouts
+from cerevox import Lexa, ProcessingMode
+
+# Different timeouts for different modes
+timeout_config = {
+    ProcessingMode.DEFAULT: 120.0,  # Accurate and fast
+    ProcessingMode.ADVANCED: 600.0  # Even more accurate but slower
+}
+
+def parse_with_mode_timeout(client, files, mode):
+    return client.parse(
+        files,
+        mode=mode,
+        timeout=timeout_config.get(mode, 120.0)
+    )
+```
+</CodeGroup>
+
+### Concurrency Configuration
+
+<CodeGroup>
+```python Async Concurrency Limits
+import asyncio
+from cerevox import AsyncLexa
+
+async def process_large_batch(files, batch_size=10, max_concurrent=5):
+    """Process large batches with controlled concurrency"""
+    
+    # Configure client with concurrency limits
+    async with AsyncLexa(
+        api_key="your-api-key",
+        max_concurrent=max_concurrent,
+        timeout=300.0
+    ) as client:
+        
+        # Create semaphore to limit concurrent batches
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def process_batch(batch):
+            async with semaphore:
+                return await client.parse(batch)
+        
+        # Create batches
+        batches = [files[i:i + batch_size] for i in range(0, len(files), batch_size)]
+        
+        # Process batches concurrently
+        tasks = [process_batch(batch) for batch in batches]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Handle results
+        all_documents = []
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"Batch failed: {result}")
+            else:
+                all_documents.extend(result)
+        
+        return all_documents
+```
+
+```python Sync Batch Processing
+from cerevox import Lexa
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+def process_batch_sync(files, max_workers=3):
+    """Process files in parallel using threads"""
+    
+    client = Lexa(
+        api_key="your-api-key",
+        timeout=180.0,
+        max_retries=3
+    )
+    
+    def parse_single_file(file):
+        try:
+            return client.parse([file])
+        except Exception as e:
+            print(f"Failed to parse {file}: {e}")
+            return None
+    
+    all_documents = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all files
+        future_to_file = {
+            executor.submit(parse_single_file, file): file 
+            for file in files
+        }
+        
+        # Collect results
+        for future in as_completed(future_to_file):
+            file = future_to_file[future]
+            try:
+                documents = future.result()
+                if documents:
+                    all_documents.extend(documents)
+            except Exception as e:
+                print(f"Error processing {file}: {e}")
+    
+    return all_documents
+```
+</CodeGroup>
+
+## Security
+
+### API Key Management
+
+<CodeGroup>
+```python Secure API Key Handling
+import os
+from pathlib import Path
+from cerevox import Lexa
+
+class SecureLexaClient:
+    def __init__(self):
+        self.api_key = self._get_secure_api_key()
+        self.client = Lexa(api_key=self.api_key)
+    
+    def _get_secure_api_key(self):
+        """Get API key from secure sources"""
+        
+        # 1. Environment variable (recommended)
+        api_key = os.getenv("CEREVOX_API_KEY")
+        if api_key:
+            return api_key
+        
+        # 2. Secure file (if environment variable not available)
+        key_file = Path.home() / ".cerevox" / "api_key"
+        if key_file.exists():
+            return key_file.read_text().strip()
+        
+        # 3. AWS Secrets Manager, Azure Key Vault, etc.
+        # api_key = self._get_from_secrets_manager()
+        
+        raise ValueError("No API key found. Set CEREVOX_API_KEY environment variable.")
+    
+    def parse(self, *args, **kwargs):
+        return self.client.parse(*args, **kwargs)
+
+# Usage
+client = SecureLexaClient()
+documents = client.parse(["document.pdf"])
+```
+
+```python Cloud Secret Management
+import boto3
+from cerevox import Lexa
+
+def get_api_key_from_aws_secrets():
+    """Get API key from AWS Secrets Manager"""
+    secrets_client = boto3.client('secretsmanager')
+    
+    try:
+        response = secrets_client.get_secret_value(
+            SecretId='cerevox/api-key'
+        )
+        return response['SecretString']
+    except Exception as e:
+        raise ValueError(f"Failed to get API key from AWS Secrets: {e}")
+
+# Azure Key Vault example
+def get_api_key_from_azure():
+    """Get API key from Azure Key Vault"""
+    from azure.keyvault.secrets import SecretClient
+    from azure.identity import DefaultAzureCredential
+    
+    credential = DefaultAzureCredential()
+    client = SecretClient(
+        vault_url="https://your-vault.vault.azure.net/",
+        credential=credential
+    )
+    
+    secret = client.get_secret("cerevox-api-key")
+    return secret.value
+
+# Usage
+api_key = get_api_key_from_aws_secrets()
+client = Lexa(api_key=api_key)
+```
+</CodeGroup>
+
+### Network Security
+
+<CodeGroup>
+```python SSL/TLS Configuration
+import ssl
+from cerevox import Lexa
+
+# Custom SSL context for enterprise environments
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = True
+ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+# For self-signed certificates (development only)
+# ssl_context.check_hostname = False
+# ssl_context.verify_mode = ssl.CERT_NONE
+
+client = Lexa(
+    api_key="your-api-key",
+    ssl_context=ssl_context
+)
+```
+
+```python Proxy Configuration
+import os
+from cerevox import Lexa
+
+# Configure proxy settings
+proxies = {
+    'http': os.getenv('HTTP_PROXY'),
+    'https': os.getenv('HTTPS_PROXY')
+}
+
+client = Lexa(
+    api_key="your-api-key",
+    proxies=proxies,
+    timeout=180.0  # Longer timeout for proxy connections
+)
+```
+</CodeGroup>
+
+## Logging
+
+### Basic Logging Setup
+
+<CodeGroup>
+```python Standard Logging
+import logging
+from cerevox import Lexa
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Enable Cerevox SDK logging
+cerevox_logger = logging.getLogger('cerevox')
+cerevox_logger.setLevel(logging.DEBUG)
+
+client = Lexa(api_key="your-api-key")
+documents = client.parse(["document.pdf"])
+```
+
+```python Structured Logging
+import logging
+import json
+from datetime import datetime
+from cerevox import Lexa
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_entry = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno
+        }
+        
+        # Add extra fields
+        if hasattr(record, 'request_id'):
+            log_entry['request_id'] = record.request_id
+        if hasattr(record, 'error_code'):
+            log_entry['error_code'] = record.error_code
+        
+        return json.dumps(log_entry)
+
+# Setup structured logging
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+
+logger = logging.getLogger('cerevox')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+```
+</CodeGroup>
+
+### Production Logging
+
+<CodeGroup>
+```python Production Logging Setup
+import logging
+import logging.handlers
+from pathlib import Path
+from cerevox import Lexa
+
+def setup_production_logging():
+    """Setup production-grade logging"""
+    
+    # Create logs directory
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    # Configure root logger
+    logging.basicConfig(
+        level=logging.WARNING,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Cerevox-specific logger with file rotation
+    cerevox_logger = logging.getLogger('cerevox')
+    cerevox_logger.setLevel(logging.INFO)
+    
+    # Rotating file handler
+    file_handler = logging.handlers.RotatingFileHandler(
+        log_dir / "cerevox.log",
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+    cerevox_logger.addHandler(file_handler)
+    
+    # Error-specific handler
+    error_handler = logging.handlers.RotatingFileHandler(
+        log_dir / "cerevox_errors.log",
+        maxBytes=5*1024*1024,  # 5MB
+        backupCount=10
+    )
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s\n%(exc_info)s'
+    ))
+    cerevox_logger.addHandler(error_handler)
+    
+    return cerevox_logger
+
+# Setup logging
+logger = setup_production_logging()
+client = Lexa(api_key="your-api-key")
+```
+</CodeGroup>
+
+## Framework Integration
+
+### Django
+
+<CodeGroup>
+```python Django Settings
+# settings.py
+import os
+
+# Cerevox configuration
+CEREVOX_API_KEY = os.getenv('CEREVOX_API_KEY')
+CEREVOX_TIMEOUT = 300.0
+CEREVOX_MAX_RETRIES = 5
+
+# Django logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'cerevox_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/cerevox.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'cerevox': {
+            'handlers': ['cerevox_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+```
+
+```python Django Service Class
+# services.py
+from django.conf import settings
+from cerevox import Lexa, LexaError
+import logging
+
+logger = logging.getLogger(__name__)
+
+class DocumentParsingService:
+    def __init__(self):
+        self.client = Lexa(
+            api_key=settings.CEREVOX_API_KEY,
+            timeout=settings.CEREVOX_TIMEOUT,
+            max_retries=settings.CEREVOX_MAX_RETRIES
+        )
+    
+    def parse_documents(self, files):
+        """Parse documents with Django integration"""
+        try:
+            documents = self.client.parse(files)
+            logger.info(f"Successfully parsed {len(documents)} documents")
+            return documents
+        except LexaError as e:
+            logger.error(f"Document parsing failed: {e.message}")
+            raise
+```
+</CodeGroup>
+
+### FastAPI
+
+<CodeGroup>
+```python FastAPI Settings
+# config.py
+from pydantic import BaseSettings
+
+class Settings(BaseSettings):
+    cerevox_api_key: str
+    cerevox_timeout: float = 120.0
+    cerevox_max_retries: int = 3
+    cerevox_base_url: str = "https://data.cerevox.ai"
+    
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+```
+
+```python FastAPI Dependency
+# dependencies.py
+from fastapi import Depends
+from cerevox import AsyncLexa
+from .config import settings
+
+async def get_lexa_client():
+    """FastAPI dependency for Lexa client"""
+    async with AsyncLexa(
+        api_key=settings.cerevox_api_key,
+        timeout=settings.cerevox_timeout,
+        max_retries=settings.cerevox_max_retries
+    ) as client:
+        yield client
+
+# Usage in routes
+from fastapi import FastAPI, Depends, UploadFile
+from .dependencies import get_lexa_client
+
+app = FastAPI()
+
+@app.post("/parse")
+async def parse_documents(
+    files: list[UploadFile],
+    client: AsyncLexa = Depends(get_lexa_client)
+):
+    # Parse uploaded files
+    file_contents = [await f.read() for f in files]
+    documents = await client.parse(file_contents)
+    return {"documents": len(documents)}
+```
+</CodeGroup>
+
+## Validation
+
+<CodeGroup>
+```python Configuration Validation
+from cerevox import Lexa, LexaError
+import os
+from typing import Optional
+
+class ValidatedLexaConfig:
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        timeout: float = 60.0,
+        max_retries: int = 3
+    ):
+        self.api_key = self._validate_api_key(api_key)
+        self.base_url = self._validate_base_url(base_url)
+        self.timeout = self._validate_timeout(timeout)
+        self.max_retries = self._validate_max_retries(max_retries)
+    
+    def _validate_api_key(self, api_key: Optional[str]) -> str:
+        if not api_key:
+            api_key = os.getenv('CEREVOX_API_KEY')
+        
+        if not api_key:
+            raise ValueError("API key is required")
+        
+        if not api_key.startswith('cx_'):
+            raise ValueError("Invalid API key format")
+        
+        return api_key
+    
+    def _validate_base_url(self, base_url: Optional[str]) -> str:
+        if not base_url:
+            base_url = os.getenv('CEREVOX_BASE_URL', 'https://data.cerevox.ai')
+        
+        if not base_url.startswith(('http://', 'https://')):
+            raise ValueError("Base URL must start with http:// or https://")
+        
+        return base_url
+    
+    def _validate_timeout(self, timeout: float) -> float:
+        if timeout <= 0:
+            raise ValueError("Timeout must be positive")
+        if timeout > 3600:  # 1 hour max
+            raise ValueError("Timeout too large (max 3600 seconds)")
+        return timeout
+    
+    def _validate_max_retries(self, max_retries: int) -> int:
+        if max_retries < 0:
+            raise ValueError("Max retries cannot be negative")
+        if max_retries > 10:
+            raise ValueError("Max retries too large (max 10)")
+        return max_retries
+    
+    def create_client(self) -> Lexa:
+        """Create validated Lexa client"""
+        return Lexa(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=self.timeout,
+            max_retries=self.max_retries
+        )
+
+# Usage
+try:
+    config = ValidatedLexaConfig(
+        timeout=120.0,
+        max_retries=5
+    )
+    client = config.create_client()
+    print("Client configured successfully")
+except ValueError as e:
+    print(f"Configuration error: {e}")
+```
+</CodeGroup>
+
+---
+
+<Card title="Next Steps" icon="arrow-right">
+  Explore [real-world examples](/examples/basic-usage) to see these configurations in action.
+</Card>

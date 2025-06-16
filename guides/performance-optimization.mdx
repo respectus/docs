@@ -1,0 +1,655 @@
+---
+title: "Performance Optimization"
+description: "Maximize Lexa performance for high-volume document processing"
+---
+
+<Note>
+  **Performance Goal:** Process 1000+ documents efficiently while maintaining accuracy and minimizing costs.
+</Note>
+
+## Quick Performance Wins
+
+### Processing Mode Optimization
+
+<CodeGroup>
+```python Choose the Right Mode
+from cerevox import Lexa, ProcessingMode
+
+client = Lexa()
+
+# ✅ DEFAULT mode - fast and efficient for most documents
+documents = client.parse(
+    "documents/*.pdf",
+    mode=ProcessingMode.DEFAULT  # Fast processing for most use cases
+)
+
+# ✅ ADVANCED mode - maximum accuracy for complex documents
+documents = client.parse(
+    "complex-research-papers/*.pdf",
+    mode=ProcessingMode.ADVANCED  # Use for complex layouts, research papers
+)
+
+print("💡 Rule: Start with DEFAULT, use ADVANCED for complex docs requiring maximum accuracy")
+```
+
+```python Mode Performance Comparison
+# Real performance data from Lexa:
+
+# DEFAULT Mode:
+# - Speed: ~3 seconds per document
+# - Best for: Most documents, general content
+# - Accuracy: 96% for typical documents
+# - Resource usage: Efficient
+
+# ADVANCED Mode: 
+# - Speed: ~8 seconds per document  
+# - Best for: Complex layouts, research papers, technical docs
+# - Accuracy: 99%+ for complex documents
+# - Resource usage: Higher
+
+# Choose based on your accuracy vs speed requirements
+```
+</CodeGroup>
+
+### Async Processing (10x Faster)
+
+<CodeGroup>
+```python Async vs Sync Performance
+import asyncio
+import time
+from cerevox import Lexa, AsyncLexa
+
+def sync_processing_slow(files):
+    """Slow synchronous processing"""
+    client = Lexa()
+    
+    start_time = time.time()
+    all_documents = []
+    
+    for file in files:
+        documents = client.parse([file])  # One at a time
+        all_documents.extend(documents)
+    
+    end_time = time.time()
+    print(f"😴 Sync processing: {end_time - start_time:.2f} seconds")
+    return all_documents
+
+async def async_processing_fast(files):
+    """Fast asynchronous processing"""
+    async with AsyncLexa() as client:
+        start_time = time.time()
+        
+        # Process all files concurrently
+        documents = await client.parse(files)
+        
+        end_time = time.time()
+        print(f"🚀 Async processing: {end_time - start_time:.2f} seconds")
+        return documents
+
+# Performance comparison
+files = [f"document_{i}.pdf" for i in range(20)]
+
+# Sync: ~100 seconds for 20 files
+sync_docs = sync_processing_slow(files)
+
+# Async: ~10 seconds for 20 files (10x faster!)
+async_docs = asyncio.run(async_processing_fast(files))
+
+print("💡 Always use async for multiple documents!")
+```
+
+```python Optimal Concurrency Settings
+import asyncio
+from cerevox import AsyncLexa
+
+async def find_optimal_concurrency(files):
+    """Find the optimal concurrency for your use case"""
+    
+    concurrency_levels = [1, 5, 10, 15, 20]
+    
+    for concurrency in concurrency_levels:
+        start_time = time.time()
+        
+        async with AsyncLexa() as client:
+            # Process with limited concurrency
+            semaphore = asyncio.Semaphore(concurrency)
+            
+            async def process_with_limit(file):
+                async with semaphore:
+                    return await client.parse([file])
+            
+            tasks = [process_with_limit(file) for file in files[:20]]  # Test with 20 files
+            results = await asyncio.gather(*tasks)
+        
+        end_time = time.time()
+        processing_time = end_time - start_time
+        
+        print(f"Concurrency {concurrency:2d}: {processing_time:.2f}s ({20/processing_time:.1f} docs/sec)")
+
+# Find your optimal settings
+test_files = [f"test_doc_{i}.pdf" for i in range(20)]
+asyncio.run(find_optimal_concurrency(test_files))
+
+# Typical results:
+# Concurrency  1: 45.2s (0.4 docs/sec)
+# Concurrency  5: 12.1s (1.7 docs/sec) ← Often optimal
+# Concurrency 10: 8.5s (2.4 docs/sec)   ← Good for larger files
+# Concurrency 15: 9.2s (2.2 docs/sec)   ← Diminishing returns
+# Concurrency 20: 11.1s (1.8 docs/sec)  ← Too high, performance drops
+```
+</CodeGroup>
+
+## Batch Processing Strategies
+
+### Intelligent Batching
+
+<CodeGroup>
+```python Size-Based Batching
+import os
+from cerevox import AsyncLexa
+import asyncio
+
+async def intelligent_batching(files):
+    """Batch files based on size for optimal performance"""
+    
+    def analyze_files(file_list):
+        file_info = []
+        for file in file_list:
+            if os.path.exists(file):
+                size_mb = os.path.getsize(file) / (1024 * 1024)
+                
+                # Categorize by size
+                if size_mb < 1:
+                    category = 'small'
+                    batch_size = 50  # Small files: large batches
+                elif size_mb < 10:
+                    category = 'medium' 
+                    batch_size = 20  # Medium files: moderate batches
+                else:
+                    category = 'large'
+                    batch_size = 5   # Large files: small batches
+                
+                file_info.append({
+                    'file': file,
+                    'size_mb': size_mb,
+                    'category': category,
+                    'batch_size': batch_size
+                })
+        
+        return file_info
+    
+    # Analyze and group files
+    file_info = analyze_files(files)
+    
+    # Group by category
+    categories = {}
+    for info in file_info:
+        category = info['category']
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(info['file'])
+    
+    async with AsyncLexa() as client:
+        all_documents = []
+        
+        for category, category_files in categories.items():
+            batch_size = file_info[0]['batch_size'] if file_info else 20
+            
+            print(f"📋 Processing {len(category_files)} {category} files in batches of {batch_size}")
+            
+            for i in range(0, len(category_files), batch_size):
+                batch = category_files[i:i + batch_size]
+                
+                start_time = time.time()
+                documents = await client.parse(batch)
+                batch_time = time.time() - start_time
+                
+                all_documents.extend(documents)
+                
+                docs_per_sec = len(documents) / batch_time
+                print(f"  ✅ {category} batch: {len(documents)} docs in {batch_time:.2f}s ({docs_per_sec:.1f} docs/sec)")
+        
+        return all_documents
+
+# Example usage
+mixed_files = [
+    "small-invoice.pdf",      # 100KB
+    "medium-report.pdf",      # 5MB
+    "large-presentation.pdf"  # 25MB
+]
+
+documents = asyncio.run(intelligent_batching(mixed_files))
+```
+
+```python Memory-Efficient Processing
+import asyncio
+from cerevox import AsyncLexa
+import gc
+
+async def memory_efficient_processing(large_file_list, chunk_size=100):
+    """Process large datasets without memory issues"""
+    
+    total_processed = 0
+    
+    # Process in chunks to manage memory
+    for i in range(0, len(large_file_list), chunk_size):
+        chunk = large_file_list[i:i + chunk_size]
+        
+        print(f"🔄 Processing chunk {i//chunk_size + 1}: {len(chunk)} files")
+        
+        async with AsyncLexa() as client:
+            documents = await client.parse(chunk)
+            
+            # Process documents immediately (save to DB, extract data, etc.)
+            processed_data = []
+            for doc in documents:
+                # Extract only what you need
+                processed_data.append({
+                    'source_file': doc.source_file,
+                    'content_length': len(doc.content),
+                    'table_count': len(doc.tables),
+                    'summary': doc.content[:500]  # Only first 500 chars
+                })
+            
+            # Save processed data
+            await save_to_database(processed_data)  # Your save function
+            
+            total_processed += len(documents)
+            
+            # Clear variables and force garbage collection
+            del documents
+            del processed_data
+            gc.collect()
+            
+            print(f"  ✅ Chunk complete. Total processed: {total_processed}")
+        
+        # Brief pause between chunks
+        await asyncio.sleep(0.5)
+    
+    print(f"🎉 Memory-efficient processing complete: {total_processed} documents")
+
+async def save_to_database(processed_data):
+    """Placeholder for your database save function"""
+    # Implement your database save logic here
+    await asyncio.sleep(0.1)  # Simulate save time
+
+# Process 10,000 documents efficiently
+large_dataset = [f"document_{i:05d}.pdf" for i in range(10000)]
+asyncio.run(memory_efficient_processing(large_dataset))
+```
+</CodeGroup>
+
+## Error Handling & Retry Strategies
+
+### Production-Ready Error Handling
+
+<CodeGroup>
+```python Robust Error Handling
+from cerevox import AsyncLexa, LexaError
+import asyncio
+import time
+
+async def robust_processing_with_retries(files, max_retries=3):
+    """Production-ready processing with intelligent retries"""
+    
+    async def process_with_retry(client, file, attempt=0):
+        try:
+            documents = await client.parse([file])
+            return {'file': file, 'documents': documents, 'success': True}
+            
+        except LexaError as e:
+            if attempt < max_retries:
+                # Exponential backoff
+                wait_time = (2 ** attempt)
+                print(f"⏳ Retry {attempt + 1} for {file} in {wait_time}s: {e.message}")
+                await asyncio.sleep(wait_time)
+                return await process_with_retry(client, file, attempt + 1)
+            else:
+                print(f"❌ Max retries exceeded for {file}: {e.message}")
+                return {'file': file, 'error': str(e), 'success': False}
+                
+        except Exception as e:
+            print(f"💥 Unexpected error for {file}: {e}")
+            return {'file': file, 'error': str(e), 'success': False}
+    
+    async with AsyncLexa() as client:
+        # Process all files with retries
+        tasks = [process_with_retry(client, file) for file in files]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Analyze results
+        successful = [r for r in results if isinstance(r, dict) and r['success']]
+        failed = [r for r in results if isinstance(r, dict) and not r['success']]
+        exceptions = [r for r in results if isinstance(r, Exception)]
+        
+        print(f"📊 Processing Results:")
+        print(f"  ✅ Successful: {len(successful)}")
+        print(f"  ❌ Failed: {len(failed)}")
+        print(f"  💥 Exceptions: {len(exceptions)}")
+        
+        return successful, failed, exceptions
+
+# Process with robust error handling
+files_with_issues = ["good-doc.pdf", "corrupted-doc.pdf", "missing-doc.pdf"]
+successful, failed, exceptions = asyncio.run(robust_processing_with_retries(files_with_issues))
+```
+
+```python Circuit Breaker Pattern
+import asyncio
+from cerevox import AsyncLexa
+import time
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, recovery_timeout=60):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+    
+    async def call(self, coro):
+        if self.state == 'OPEN':
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = 'HALF_OPEN'
+                print("🔄 Circuit breaker: HALF_OPEN (trying recovery)")
+            else:
+                raise Exception("Circuit breaker is OPEN")
+        
+        try:
+            result = await coro
+            await self._on_success()
+            return result
+        except Exception as e:
+            await self._on_failure()
+            raise e
+    
+    async def _on_success(self):
+        self.failure_count = 0
+        if self.state == 'HALF_OPEN':
+            self.state = 'CLOSED'
+            print("✅ Circuit breaker: CLOSED (recovery successful)")
+    
+    async def _on_failure(self):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        
+        if self.failure_count >= self.failure_threshold:
+            self.state = 'OPEN'
+            print(f"🔴 Circuit breaker: OPEN ({self.failure_count} failures)")
+
+async def process_with_circuit_breaker(files):
+    """Process files with circuit breaker protection"""
+    
+    circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
+    
+    async with AsyncLexa() as client:
+        results = []
+        
+        for file in files:
+            try:
+                documents = await circuit_breaker.call(client.parse([file]))
+                results.append({'file': file, 'documents': documents, 'success': True})
+                print(f"✅ Processed: {file}")
+                
+            except Exception as e:
+                if "Circuit breaker is OPEN" in str(e):
+                    print(f"🔴 Skipped {file}: Circuit breaker open")
+                    results.append({'file': file, 'error': 'Circuit breaker open', 'success': False})
+                else:
+                    print(f"❌ Failed: {file} - {e}")
+                    results.append({'file': file, 'error': str(e), 'success': False})
+        
+        return results
+
+# Use circuit breaker for unstable processing scenarios
+test_files = ["doc1.pdf", "doc2.pdf", "problematic-doc.pdf", "doc4.pdf"]
+results = asyncio.run(process_with_circuit_breaker(test_files))
+```
+</CodeGroup>
+
+## Cost Optimization
+
+### Smart Processing Strategies
+
+<CodeGroup>
+```python Cost-Effective Processing
+from cerevox import Lexa, ProcessingMode
+import time
+
+def cost_optimized_processing(files):
+    """Optimize for cost while maintaining quality"""
+    
+    client = Lexa()
+    
+    # Strategy 1: Use DEFAULT mode for simple documents
+    simple_extensions = ['.txt', '.csv', '.md']
+    complex_extensions = ['.pdf', '.docx', '.pptx']
+    
+    simple_files = [f for f in files if any(f.endswith(ext) for ext in simple_extensions)]
+    complex_files = [f for f in files if any(f.endswith(ext) for ext in complex_extensions)]
+    
+    all_documents = []
+    
+    # Process simple files with DEFAULT mode (cheaper)
+    if simple_files:
+        print(f"💰 Processing {len(simple_files)} simple files with DEFAULT mode")
+        start_time = time.time()
+        
+        simple_docs = client.parse(
+            simple_files,
+            mode=ProcessingMode.DEFAULT  # Fast processing for most use cases
+        )
+        
+        processing_time = time.time() - start_time
+        print(f"  ✅ DEFAULT mode: {len(simple_docs)} docs in {processing_time:.2f}s")
+        all_documents.extend(simple_docs)
+    
+    # Process complex files with ADVANCED mode (balanced cost/quality)
+    if complex_files:
+        print(f"📄 Processing {len(complex_files)} complex files with ADVANCED mode")
+        start_time = time.time()
+        
+        complex_docs = client.parse(
+            complex_files,
+            mode=ProcessingMode.ADVANCED  # Use for complex layouts, research papers
+        )
+        
+        processing_time = time.time() - start_time
+        print(f"  ✅ ADVANCED mode: {len(complex_docs)} docs in {processing_time:.2f}s")
+        all_documents.extend(complex_docs)
+    
+    print(f"💡 Cost optimization: Used DEFAULT mode for {len(simple_files)} files, ADVANCED for {len(complex_files)} files")
+    return all_documents
+
+# Cost optimization example
+mixed_files = [
+    "simple-data.txt",      # Use DEFAULT mode
+    "simple-list.csv",      # Use DEFAULT mode  
+    "complex-report.pdf",   # Use ADVANCED mode
+    "presentation.pptx"     # Use ADVANCED mode
+]
+
+documents = cost_optimized_processing(mixed_files)
+```
+
+```python Batch Size Optimization
+import asyncio
+from cerevox import AsyncLexa
+import time
+
+async def optimize_batch_sizes(files):
+    """Find optimal batch sizes for cost and performance"""
+    
+    batch_sizes = [5, 10, 20, 50]
+    
+    # Test different batch sizes
+    for batch_size in batch_sizes:
+        print(f"🧪 Testing batch size: {batch_size}")
+        
+        start_time = time.time()
+        total_docs = 0
+        
+        async with AsyncLexa() as client:
+            for i in range(0, min(len(files), 100), batch_size):  # Test with first 100 files
+                batch = files[i:i + batch_size]
+                
+                batch_start = time.time()
+                documents = await client.parse(batch)
+                batch_time = time.time() - batch_start
+                
+                total_docs += len(documents)
+                
+                # Cost calculation (example - adjust based on your pricing)
+                cost_per_doc = 0.01  # $0.01 per document
+                batch_cost = len(documents) * cost_per_doc
+                
+                print(f"  Batch {i//batch_size + 1}: {len(documents)} docs, {batch_time:.2f}s, ${batch_cost:.2f}")
+        
+        total_time = time.time() - start_time
+        docs_per_second = total_docs / total_time
+        cost_per_hour = docs_per_second * 3600 * 0.01  # Hourly cost estimate
+        
+        print(f"  📊 Batch size {batch_size}: {docs_per_second:.1f} docs/sec, ~${cost_per_hour:.2f}/hour")
+        print()
+
+# Find optimal batch size for your use case
+large_file_set = [f"doc_{i:03d}.pdf" for i in range(500)]
+asyncio.run(optimize_batch_sizes(large_file_set))
+
+# Typical results:
+# Batch size  5: 2.1 docs/sec, ~$75.60/hour
+# Batch size 10: 3.8 docs/sec, ~$136.80/hour  ← Often optimal
+# Batch size 20: 4.2 docs/sec, ~$151.20/hour
+# Batch size 50: 3.9 docs/sec, ~$140.40/hour  ← Diminishing returns
+```
+</CodeGroup>
+
+## Performance Monitoring
+
+### Real-Time Performance Tracking
+
+<CodeGroup>
+```python Performance Monitor
+import time
+import asyncio
+from cerevox import AsyncLexa
+
+class PerformanceMonitor:
+    def __init__(self):
+        self.stats = {
+            'total_documents': 0,
+            'total_time': 0,
+            'successful_documents': 0,
+            'failed_documents': 0,
+            'average_doc_size': 0,
+            'docs_per_second': 0
+        }
+        self.start_time = None
+    
+    def start_monitoring(self):
+        self.start_time = time.time()
+        print("📊 Performance monitoring started")
+    
+    def record_batch(self, documents, processing_time):
+        self.stats['total_documents'] += len(documents)
+        self.stats['total_time'] += processing_time
+        self.stats['successful_documents'] += len(documents)
+        
+        # Calculate running averages
+        if self.stats['total_time'] > 0:
+            self.stats['docs_per_second'] = self.stats['total_documents'] / self.stats['total_time']
+        
+        # Calculate average document size
+        total_content = sum(len(doc.content) for doc in documents)
+        self.stats['average_doc_size'] = total_content / len(documents) if documents else 0
+    
+    def record_failure(self, failed_count):
+        self.stats['failed_documents'] += failed_count
+    
+    def print_stats(self):
+        print(f"\n📊 Performance Statistics:")
+        print(f"  📄 Total documents: {self.stats['total_documents']}")
+        print(f"  ✅ Successful: {self.stats['successful_documents']}")
+        print(f"  ❌ Failed: {self.stats['failed_documents']}")
+        print(f"  ⚡ Speed: {self.stats['docs_per_second']:.2f} docs/second")
+        print(f"  📏 Avg doc size: {self.stats['average_doc_size']:,.0f} chars")
+        print(f"  ⏱️  Total time: {self.stats['total_time']:.2f} seconds")
+        
+        if self.start_time:
+            elapsed = time.time() - self.start_time
+            print(f"  🕐 Elapsed time: {elapsed:.2f} seconds")
+
+async def monitored_processing(files, batch_size=20):
+    """Process files with performance monitoring"""
+    
+    monitor = PerformanceMonitor()
+    monitor.start_monitoring()
+    
+    async with AsyncLexa() as client:
+        for i in range(0, len(files), batch_size):
+            batch = files[i:i + batch_size]
+            
+            batch_start = time.time()
+            
+            try:
+                documents = await client.parse(batch)
+                batch_time = time.time() - batch_start
+                
+                monitor.record_batch(documents, batch_time)
+                
+                print(f"✅ Batch {i//batch_size + 1}: {len(documents)} docs in {batch_time:.2f}s")
+                
+            except Exception as e:
+                batch_time = time.time() - batch_start
+                monitor.record_failure(len(batch))
+                print(f"❌ Batch {i//batch_size + 1} failed: {e}")
+            
+            # Print stats every 5 batches
+            if (i // batch_size + 1) % 5 == 0:
+                monitor.print_stats()
+    
+    # Final statistics
+    monitor.print_stats()
+    return monitor.stats
+
+# Monitor processing performance
+test_files = [f"document_{i:03d}.pdf" for i in range(100)]
+stats = asyncio.run(monitored_processing(test_files))
+```
+</CodeGroup>
+
+## Performance Best Practices
+
+<AccordionGroup>
+<Accordion icon="zap" title="Processing Mode Selection">
+- **DEFAULT mode**: Fast processing for most use cases
+- **ADVANCED mode**: Maximum accuracy for complex documents
+</Accordion>
+
+<Accordion icon="arrows-rotate" title="Async Concurrency">
+- **Sweet spot**: 5-10 concurrent requests for most use cases
+- **Small files**: Can handle 15-20 concurrent requests
+- **Large files**: Reduce to 3-5 concurrent requests
+- **Monitor**: Watch for rate limiting and adjust accordingly
+</Accordion>
+
+<Accordion icon="layer-group" title="Batching Strategy">
+- **Small files** (< 1MB): Batches of 30-50 files
+- **Medium files** (1-10MB): Batches of 10-20 files
+- **Large files** (>10MB): Batches of 3-5 files
+- **Mixed sizes**: Group by size before batching
+</Accordion>
+
+<Accordion icon="memory" title="Memory Management">
+- Process large datasets in chunks (100-500 files per chunk)
+- Clear document variables after processing
+- Use garbage collection for long-running processes
+- Save results immediately, don't accumulate in memory
+</Accordion>
+</AccordionGroup>
+
+---
+
+<Tip>
+  **Performance Rule:** Start with async processing + DEFAULT mode + batches of 20. This gives 80% of optimal performance with minimal tuning.
+</Tip> 

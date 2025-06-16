@@ -1,8 +1,364 @@
 ---
 title: 'Legal Research'
-description: 'Efficiently navigate and analyze complex legal documents with trusted sources'
+description: 'Transform legal document analysis with AI-powered parsing and precise extraction'
 icon: 'gavel'
 ---
 
-Legal research typically involves reviewing vast amounts of case files, contracts, discovery documents, and legal precedents. Cerevox enables you to quickly analyze and extract relevant information from these documents, regardless of their size or structure. With Cerevox, you can easily search for legal terms, clauses, rulings, or references, and immediately see the exact sources where that information is located. This ensures that your legal research is thorough, transparent, and backed by reliable source citations, saving you countless hours in legal document review and allowing you to focus on deeper analysis and strategy.
+# Legal Document Analysis with Lexa
+
+Revolutionize legal research and document review with Lexa's enterprise-grade document parsing. Extract precise information from contracts, case files, and legal documents with unmatched accuracy.
+
+## Why Lexa for Legal Practice?
+
+<CardGroup cols={2}>
+  <Card title="Precise Extraction" icon="crosshairs">
+    Extract clauses, terms, and citations with 99.5% accuracy
+  </Card>
+  <Card title="Privileged & Secure" icon="shield-alt">
+    SOC 2 certified with attorney-client privilege protection
+  </Card>
+  <Card title="Contract Analysis" icon="file-contract">
+    Analyze complex contracts and legal agreements
+  </Card>
+  <Card title="Discovery Support" icon="search">
+    Process thousands of discovery documents efficiently
+  </Card>
+</CardGroup>
+
+## Supported Legal Documents
+
+- **Contracts & Agreements** (MSAs, NDAs, employment agreements)
+- **Court Filings** (pleadings, motions, briefs)
+- **Discovery Documents** (depositions, exhibits, correspondence)
+- **Case Law** (judicial opinions, legal precedents)
+- **Regulatory Filings** (SEC forms, compliance documents)
+- **Legal Research** (law journals, legal treatises)
+- **Patent Applications** and intellectual property documents
+
+## Quick Start: Contract Analysis
+
+Extract key terms and clauses from legal contracts:
+
+<CodeGroup>
+```python Contract Analysis
+from cerevox import Lexa
+
+# Initialize client
+client = Lexa(api_key="your-api-key")
+
+# Parse legal contract
+documents = client.parse("service_agreement.pdf")
+contract = documents[0]
+
+# Extract key contract terms
+liability_clauses = contract.search_content("liability|indemnif")
+termination_terms = contract.search_content("termination|expire")
+payment_terms = contract.search_content("payment|fee|invoice")
+
+print(f"Contract: {contract.filename}")
+print(f"Pages: {contract.total_pages}")
+print(f"Liability clauses: {len(liability_clauses)}")
+print(f"Payment terms: {len(payment_terms)}")
+```
+
+```python Async Batch Processing
+import asyncio
+from cerevox import AsyncLexa
+
+async def analyze_contract_portfolio():
+    async with AsyncLexa(api_key="your-api-key") as client:
+        # Process multiple contracts
+        contracts = [
+            "msa_template.pdf",
+            "nda_standard.docx", 
+            "employment_agreement.pdf"
+        ]
+        
+        documents = await client.parse(contracts)
+        
+        contract_analysis = []
+        for doc in documents:
+            analysis = {
+                'filename': doc.filename,
+                'pages': doc.total_pages,
+                'key_terms': extract_legal_terms(doc),
+                'risk_clauses': doc.search_content("risk|liable|penalty"),
+                'obligations': doc.search_content("shall|must|required")
+            }
+            contract_analysis.append(analysis)
+        
+        return contract_analysis
+
+def extract_legal_terms(document):
+    """Extract common legal terms"""
+    terms = [
+        "confidential", "proprietary", "intellectual property",
+        "termination", "breach", "indemnification", "liability"
+    ]
+    
+    found_terms = {}
+    for term in terms:
+        matches = document.search_content(term)
+        found_terms[term] = len(matches)
+    
+    return found_terms
+
+# Run analysis
+results = asyncio.run(analyze_contract_portfolio())
+```
+</CodeGroup>
+
+## Advanced Legal Analysis
+
+### Contract Clause Extraction
+
+Build a comprehensive contract analysis system:
+
+```python
+from cerevox import AsyncLexa
+import re
+from typing import Dict, List
+
+class ContractAnalyzer:
+    def __init__(self, api_key: str):
+        self.client = AsyncLexa(api_key=api_key)
+        
+        # Define clause patterns
+        self.clause_patterns = {
+            'termination': [
+                r'terminat[e|ion].*?(?:\.|;|\n)',
+                r'end.*?agreement.*?(?:\.|;|\n)'
+            ],
+            'liability': [
+                r'liabilit.*?(?:\.|;|\n)',
+                r'indemnif.*?(?:\.|;|\n)'
+            ],
+            'confidentiality': [
+                r'confidential.*?(?:\.|;|\n)',
+                r'proprietary.*?(?:\.|;|\n)'
+            ]
+        }
+    
+    async def analyze_contract(self, contract_path: str) -> Dict:
+        """Comprehensive contract analysis"""
+        async with self.client:
+            documents = await self.client.parse(contract_path)
+            contract = documents[0]
+            
+            analysis = {
+                'contract_info': {
+                    'filename': contract.filename,
+                    'pages': contract.total_pages
+                },
+                'extracted_clauses': {},
+                'risk_assessment': self._assess_risks(contract)
+            }
+            
+            # Extract clauses by type
+            for clause_type, patterns in self.clause_patterns.items():
+                clauses = []
+                for pattern in patterns:
+                    matches = re.findall(pattern, contract.content, re.IGNORECASE)
+                    clauses.extend(matches)
+                
+                analysis['extracted_clauses'][clause_type] = {
+                    'count': len(clauses),
+                    'text': clauses[:3]  # First 3 matches
+                }
+            
+            return analysis
+    
+    def _assess_risks(self, contract) -> Dict:
+        """Assess legal risks in contract"""
+        high_risk_terms = [
+            "unlimited liability", "personal guarantee", 
+            "liquidated damages", "penalty"
+        ]
+        
+        risks = {}
+        for term in high_risk_terms:
+            matches = contract.search_content(term)
+            if matches:
+                risks[term] = {
+                    'count': len(matches),
+                    'severity': 'high'
+                }
+        
+        return risks
+
+# Usage
+analyzer = ContractAnalyzer("your-api-key")
+analysis = await analyzer.analyze_contract("service_agreement.pdf")
+```
+
+### Legal Document Search & RAG
+
+Build a legal research system with semantic search:
+
+```python
+from cerevox import AsyncLexa
+from typing import List, Dict
+
+class LegalRAGSystem:
+    def __init__(self, api_key: str):
+        self.client = AsyncLexa(api_key=api_key)
+        self.legal_corpus = []
+    
+    async def ingest_legal_documents(self, document_paths: List[str]):
+        """Ingest legal documents for search"""
+        async with self.client:
+            documents = await self.client.parse(document_paths)
+            
+            # Create searchable chunks optimized for legal content
+            for doc in documents:
+                chunks = doc.get_text_chunks(
+                    target_size=800,  # Good for legal context
+                    tolerance=0.2
+                )
+                
+                for i, chunk in enumerate(chunks):
+                    self.legal_corpus.append({
+                        'id': f"{doc.filename}_{i}",
+                        'content': chunk,
+                        'document': doc.filename,
+                        'document_type': self._classify_document(doc.filename)
+                    })
+        
+        return f"Ingested {len(self.legal_corpus)} legal document chunks"
+    
+    def search_legal_precedents(self, query: str, limit: int = 5) -> List[Dict]:
+        """Search for legal precedents and relevant cases"""
+        results = []
+        query_terms = query.lower().split()
+        
+        for chunk in self.legal_corpus:
+            content_lower = chunk['content'].lower()
+            
+            # Score based on term frequency
+            score = sum(1 for term in query_terms if term in content_lower)
+            
+            if score > 0:
+                results.append({
+                    'content': chunk['content'],
+                    'document': chunk['document'],
+                    'relevance_score': score,
+                    'document_type': chunk['document_type']
+                })
+        
+        # Sort by relevance and return top results
+        results.sort(key=lambda x: x['relevance_score'], reverse=True)
+        return results[:limit]
+    
+    def _classify_document(self, filename: str) -> str:
+        """Classify legal document type"""
+        filename_lower = filename.lower()
+        
+        if any(term in filename_lower for term in ['contract', 'agreement']):
+            return 'contract'
+        elif any(term in filename_lower for term in ['case', 'opinion']):
+            return 'case_law'
+        elif any(term in filename_lower for term in ['brief', 'motion']):
+            return 'court_filing'
+        else:
+            return 'legal_document'
+
+# Usage
+legal_rag = LegalRAGSystem("your-api-key")
+await legal_rag.ingest_legal_documents(["contracts.pdf", "case_law.pdf"])
+results = legal_rag.search_legal_precedents("intellectual property")
+```
+
+## Real-World Legal Use Cases
+
+### Due Diligence Automation
+
+```python
+async def automated_due_diligence(target_company_docs):
+    """Automate due diligence document review"""
+    
+    async with AsyncLexa(api_key="your-api-key") as client:
+        documents = await client.parse(target_company_docs)
+        
+        due_diligence_report = {}
+        for doc in documents:
+            # Extract critical information
+            due_diligence_report[doc.filename] = {
+                'contract_terms': doc.search_content("term|clause|provision"),
+                'liabilities': doc.search_content("liabilit|debt|obligation"),
+                'intellectual_property': doc.search_content("patent|trademark"),
+                'litigation_risks': doc.search_content("lawsuit|litigation"),
+                'compliance_issues': doc.search_content("regulation|compliance")
+            }
+        
+        return due_diligence_report
+```
+
+### Discovery Document Processing
+
+```python
+async def process_discovery_documents(document_list: List[str]):
+    """Process large volumes of discovery documents"""
+    
+    async with AsyncLexa(api_key="your-api-key") as client:
+        BATCH_SIZE = 10
+        all_results = {}
+        
+        for i in range(0, len(document_list), BATCH_SIZE):
+            batch = document_list[i:i + BATCH_SIZE]
+            documents = await client.parse(batch)
+            
+            for doc in documents:
+                key_info = {
+                    'pages': doc.total_pages,
+                    'communications': doc.search_content("email|letter|memo"),
+                    'privileged_content': doc.search_content("attorney|counsel"),
+                    'key_people': extract_people_names(doc)
+                }
+                
+                all_results[doc.filename] = key_info
+        
+        return all_results
+```
+
+## Performance for Legal Documents
+
+<CardGroup cols={3}>
+  <Card title="Document Processing">
+    **45 seconds** for 500+ page legal brief
+  </Card>
+  <Card title="Clause Extraction">
+    **99.5%** accuracy on contract clauses
+  </Card>
+  <Card title="Discovery Volume">
+    **1000+ documents/hour** batch processing
+  </Card>
+</CardGroup>
+
+## Security & Compliance
+
+<Note>
+Attorney-client privilege and work product protection maintained throughout processing
+</Note>
+
+- **Privileged Content**: Automatic detection and protection
+- **Data Isolation**: Client data never shared or used for training  
+- **Audit Trail**: Complete processing logs for compliance
+- **Access Controls**: Role-based access with detailed permissions
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" href="/welcome/quickstart">
+    Start processing legal documents in minutes
+  </Card>
+  <Card title="API Reference" href="/api/methods">
+    Explore legal-specific parsing methods
+  </Card>
+  <Card title="Best Practices" href="/guides/best-practices">
+    Learn production patterns for legal workflows
+  </Card>
+  <Card title="Security Guide" href="/company/about">
+    Understand our security measures
+  </Card>
+</CardGroup>
 

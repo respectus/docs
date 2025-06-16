@@ -1,0 +1,667 @@
+---
+title: "API Methods"
+description: "Complete reference for all Lexa API methods and operations"
+---
+
+## Core Parsing Methods
+
+### parse()
+
+Parse local files, file-like objects, or raw bytes content.
+
+<CodeGroup>
+```python Signature
+def parse(
+    files: Union[str, Path, bytes, BinaryIO, List[Union[str, Path, bytes, BinaryIO]]],
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 60.0,
+    poll_interval: float = 2.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+from cerevox import Lexa, ProcessingMode
+
+client = Lexa(api_key="your-api-key")
+
+# Parse single file
+documents = client.parse("document.pdf")
+
+# Parse multiple files
+documents = client.parse(["doc1.pdf", "doc2.docx", "doc3.txt"])
+
+# Parse with custom settings
+documents = client.parse(
+    files=["document.pdf"],
+    mode=ProcessingMode.ADVANCED,
+    timeout=120.0,
+    poll_interval=1.0
+)
+
+# Parse bytes content
+with open("document.pdf", "rb") as f:
+    content = f.read()
+documents = client.parse(content)
+
+# Parse with progress callback
+def progress_callback(status):
+    print(f"Status: {status.status}")
+
+documents = client.parse(
+    ["large-document.pdf"],
+    progress_callback=progress_callback
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="files" type="Union[str, Path, bytes, BinaryIO, List[...]]" required>
+  Files to parse. Can be:
+  - File path (string or Path object)
+  - Raw bytes content
+  - File-like object (BinaryIO)
+  - List of any of the above
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="60.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="2.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+### parse_urls()
+
+Parse documents from URLs.
+
+<CodeGroup>
+```python Signature
+def parse_urls(
+    urls: Union[str, List[str]],
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 120.0,
+    poll_interval: float = 2.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+# Parse single URL
+documents = client.parse_urls("https://example.com/document.pdf")
+
+# Parse multiple URLs
+urls = [
+    "https://example.com/doc1.pdf",
+    "https://example.com/doc2.docx"
+]
+documents = client.parse_urls(urls)
+
+# Parse with custom settings
+documents = client.parse_urls(
+    urls=["https://example.com/large-document.pdf"],
+    mode=ProcessingMode.ADVANCED,
+    timeout=300.0,
+    poll_interval=5.0
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="urls" type="Union[str, List[str]]" required>
+  URLs to parse. Can be a single URL string or list of URLs
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="120.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="2.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+### get_job_status()
+
+Get the current status of a parsing job.
+
+<CodeGroup>
+```python Signature
+def get_job_status(job_id: str) -> JobStatus
+```
+
+```python Usage Examples
+# Get job status
+status = client.get_job_status("job_123456")
+print(f"Status: {status.status}")
+print(f"Progress: {status.progress}")
+
+# Monitor job until completion
+import time
+
+while True:
+    status = client.get_job_status("job_123456")
+    print(f"Current status: {status.status}")
+    
+    if status.status in ["COMPLETED", "FAILED"]:
+        break
+    
+    time.sleep(2)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="job_id" type="str" required>
+  The job ID to check status for
+</ParamField>
+
+**Returns:** `JobStatus` - Current job status information
+
+---
+
+## Amazon S3 Methods
+
+### list_s3_buckets()
+
+List available S3 buckets.
+
+<CodeGroup>
+```python Signature
+def list_s3_buckets() -> S3BucketList
+```
+
+```python Usage Examples
+# List all buckets
+buckets = client.list_s3_buckets()
+print(f"Found {len(buckets.buckets)} buckets")
+
+for bucket in buckets.buckets:
+    print(f"Bucket: {bucket.name}")
+    print(f"Created: {bucket.creation_date}")
+```
+</CodeGroup>
+
+**Returns:** `S3BucketList` - List of available S3 buckets
+
+---
+
+### list_s3_folder()
+
+List contents of an S3 folder.
+
+<CodeGroup>
+```python Signature
+def list_s3_folder(
+    bucket: str,
+    folder_path: str = "",
+    max_items: int = 1000
+) -> S3FolderContents
+```
+
+```python Usage Examples
+# List root folder
+contents = client.list_s3_folder("my-bucket")
+
+# List specific folder
+contents = client.list_s3_folder("my-bucket", "documents/")
+
+# List with custom limit
+contents = client.list_s3_folder(
+    bucket="my-bucket",
+    folder_path="documents/",
+    max_items=100
+)
+
+# Display contents
+for item in contents.files:
+    print(f"File: {item.key} ({item.size} bytes)")
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="bucket" type="str" required>
+  S3 bucket name
+</ParamField>
+
+<ParamField path="folder_path" type="str" default="">
+  Path within the bucket (empty for root)
+</ParamField>
+
+<ParamField path="max_items" type="int" default="1000">
+  Maximum number of items to return
+</ParamField>
+
+**Returns:** `S3FolderContents` - Contents of the S3 folder
+
+---
+
+### parse_s3_folder()
+
+Parse all documents in an S3 folder.
+
+<CodeGroup>
+```python Signature
+def parse_s3_folder(
+    bucket: str,
+    folder_path: str = "",
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 300.0,
+    poll_interval: float = 5.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+# Parse entire bucket
+documents = client.parse_s3_folder("my-bucket")
+
+# Parse specific folder
+documents = client.parse_s3_folder("my-bucket", "documents/")
+
+# Parse with progress monitoring
+def progress_callback(status):
+    print(f"Progress: {status.progress}")
+
+documents = client.parse_s3_folder(
+    bucket="my-bucket",
+    folder_path="documents/",
+    progress_callback=progress_callback,
+    timeout=600.0
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="bucket" type="str" required>
+  S3 bucket name
+</ParamField>
+
+<ParamField path="folder_path" type="str" default="">
+  Path within the bucket to parse
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="300.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+## Microsoft SharePoint Methods
+
+### list_sharepoint_sites()
+
+List available SharePoint sites.
+
+<CodeGroup>
+```python Signature
+def list_sharepoint_sites() -> SharePointSiteList
+```
+
+```python Usage Examples
+# List all sites
+sites = client.list_sharepoint_sites()
+
+for site in sites.sites:
+    print(f"Site: {site.name} (ID: {site.id})")
+    print(f"URL: {site.web_url}")
+```
+</CodeGroup>
+
+**Returns:** `SharePointSiteList` - List of available SharePoint sites
+
+---
+
+### list_sharepoint_drives()
+
+List drives in a SharePoint site.
+
+<CodeGroup>
+```python Signature
+def list_sharepoint_drives(site_id: str) -> SharePointDriveList
+```
+
+```python Usage Examples
+# List drives in a site
+drives = client.list_sharepoint_drives("site-id-123")
+
+for drive in drives.drives:
+    print(f"Drive: {drive.name} (ID: {drive.id})")
+    print(f"Type: {drive.drive_type}")
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="site_id" type="str" required>
+  SharePoint site ID
+</ParamField>
+
+**Returns:** `SharePointDriveList` - List of drives in the site
+
+---
+
+### parse_sharepoint_folder()
+
+Parse documents in a SharePoint folder.
+
+<CodeGroup>
+```python Signature
+def parse_sharepoint_folder(
+    site_id: str,
+    drive_id: str,
+    folder_path: str = "",
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 300.0,
+    poll_interval: float = 5.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+# Parse SharePoint folder
+documents = client.parse_sharepoint_folder(
+    site_id="site-123",
+    drive_id="drive-456",
+    folder_path="Documents/"
+)
+
+# Parse with progress monitoring
+documents = client.parse_sharepoint_folder(
+    site_id="site-123",
+    drive_id="drive-456",
+    folder_path="Documents/",
+    progress_callback=lambda status: print(f"Progress: {status.progress}"),
+    mode=ProcessingMode.ADVANCED,
+    timeout=600.0
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="site_id" type="str" required>
+  SharePoint site ID
+</ParamField>
+
+<ParamField path="drive_id" type="str" required>
+  SharePoint drive ID
+</ParamField>
+
+<ParamField path="folder_path" type="str" default="">
+  Path within the drive to parse
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="300.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+## Box Methods
+
+### list_box_folders()
+
+List folders in Box.
+
+<CodeGroup>
+```python Signature
+def list_box_folders(parent_folder_id: str = "0") -> BoxFolderList
+```
+
+```python Usage Examples
+# List root folders
+folders = client.list_box_folders()
+
+# List specific folder contents
+folders = client.list_box_folders("123456789")
+
+for folder in folders.folders:
+    print(f"Folder: {folder.name} (ID: {folder.id})")
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="parent_folder_id" type="str" default="0">
+  Parent folder ID ("0" for root folder)
+</ParamField>
+
+**Returns:** `BoxFolderList` - List of folders
+
+---
+
+### parse_box_folder()
+
+Parse documents in a Box folder.
+
+<CodeGroup>
+```python Signature
+def parse_box_folder(
+    folder_id: str,
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 300.0,
+    poll_interval: float = 5.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+# Parse Box folder
+documents = client.parse_box_folder("123456789")
+
+# Parse with custom settings
+documents = client.parse_box_folder(
+    folder_id="123456789",
+    mode=ProcessingMode.ADVANCED,
+    timeout=600.0
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="folder_id" type="str" required>
+  Box folder ID to parse
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="300.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+## Dropbox Methods
+
+### list_dropbox_folders()
+
+List folders in Dropbox.
+
+<CodeGroup>
+```python Signature
+def list_dropbox_folders(folder_path: str = "") -> DropboxFolderList
+```
+
+```python Usage Examples
+# List root folders
+folders = client.list_dropbox_folders()
+
+# List specific folder
+folders = client.list_dropbox_folders("/Documents")
+
+for folder in folders.folders:
+    print(f"Folder: {folder.name}")
+    print(f"Path: {folder.path_display}")
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="folder_path" type="str" default="">
+  Dropbox folder path (empty for root)
+</ParamField>
+
+**Returns:** `DropboxFolderList` - List of folders
+
+---
+
+### parse_dropbox_folder()
+
+Parse documents in a Dropbox folder.
+
+<CodeGroup>
+```python Signature
+def parse_dropbox_folder(
+    folder_path: str,
+    mode: ProcessingMode = ProcessingMode.DEFAULT,
+    progress_callback: Optional[Callable[[JobStatus], None]] = None,
+    timeout: float = 300.0,
+    poll_interval: float = 5.0
+) -> DocumentBatch
+```
+
+```python Usage Examples
+# Parse Dropbox folder
+documents = client.parse_dropbox_folder("/Documents")
+
+# Parse with progress monitoring
+documents = client.parse_dropbox_folder(
+    folder_path="/Documents",
+    progress_callback=lambda status: print(f"Status: {status.status}"),
+    mode=ProcessingMode.ADVANCED,
+    timeout=600.0
+)
+```
+</CodeGroup>
+
+**Parameters:**
+
+<ParamField path="folder_path" type="str" required>
+  Dropbox folder path to parse
+</ParamField>
+
+<ParamField path="mode" type="ProcessingMode" default="ProcessingMode.DEFAULT">
+  Processing mode: `DEFAULT` or `ADVANCED`
+</ParamField>
+
+<ParamField path="progress_callback" type="Optional[Callable]" default="None">
+  Callback function to monitor parsing progress
+</ParamField>
+
+<ParamField path="timeout" type="float" default="300.0">
+  Maximum time to wait for parsing completion (seconds)
+</ParamField>
+
+<ParamField path="poll_interval" type="float" default="5.0">
+  Interval between status checks (seconds)
+</ParamField>
+
+**Returns:** `DocumentBatch` - Collection of parsed documents
+
+---
+
+## Async Methods
+
+All methods are available in async versions with the `AsyncLexa` client:
+
+<CodeGroup>
+```python Async Usage
+import asyncio
+from cerevox import AsyncLexa, ProcessingMode
+
+async def main():
+    async with AsyncLexa(api_key="your-api-key") as client:
+        # All methods are available with await
+        documents = await client.parse(["document.pdf"])
+        
+        # Concurrent processing
+        tasks = [
+            client.parse(["doc1.pdf"]),
+            client.parse(["doc2.pdf"]),
+            client.parse_urls(["https://example.com/doc.pdf"])
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        all_documents = [doc for batch in results for doc in batch]
+        
+        return all_documents
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+---
+
+<Card title="Next Steps" icon="arrow-right">
+  Learn about [error handling](/api/error-handling) and [client configuration](/api/configuration) for production use.
+</Card> 

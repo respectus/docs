@@ -2,27 +2,92 @@
 title: 'About'
 ---
 
-At Cerevox, we've recognized a critical challenge in managing and extracting value from diverse datasets while maintaining trust and verifiability in the results.
+# The AI-Powered Data Layer for Developers 🧠⚡
 
-## The State of Data
+At Cerevox, we've built **Lexa** - the enterprise-grade document parsing API that developers trust to extract structured data from any document.
 
-Organizations today are inundated with data across multiple formats - PDFs, spreadsheets, text documents, presentations, and more. The challenge isn't just in accessing this information, but in efficiently analyzing it while maintaining clear traceability back to the source. Traditional tools often struggle with cross-document analysis, especially when dealing with large volumes of data across different file types. This complexity makes it difficult for analysts, researchers, and decision-makers to quickly find and verify the information they need.
+## The Developer Challenge
 
-## A World with Cerevox
+Modern applications demand intelligent document processing capabilities, but existing solutions force developers to choose between accuracy and performance. Traditional document parsing libraries struggle with:
 
-We're building a comprehensive research assistant that transforms how you interact with your data. Cerevox enables you to efficiently analyze multiple datasets simultaneously, regardless of file type or size, while ensuring every answer is backed by clear, verifiable sources.
+- **Complex layouts** and multi-format documents
+- **Poor accuracy** with tables, images, and structured data
+- **Slow processing** that doesn't scale with enterprise needs
+- **Limited integrations** with modern vector databases and AI workflows
+- **Inconsistent results** across different document types
 
-But that's not all. We've developed a powerful system that can handle massive datasets - from multi-GB documents to multiple TBs of data - while maintaining speed and accuracy. Our platform supports advanced cross-document analysis across various formats including PDF, TXT, CSV, XLSX, DOCX, PPTX, Google Workspace files, Parquet, and JSON.
+## Our Solution: Lexa API
 
-Our solution stands out because it's designed for both power and accessibility. Whether you're conducting financial analysis, legal research, market research, or managing enterprise knowledge, Cerevox provides the tools you need to find answers quickly and trust them completely. Every response includes precise citations, allowing you to trace information back to its original source effortlessly.
+**Lexa** is our state-of-the-art document parsing API that delivers:
 
-Looking ahead, we're expanding our capabilities with upcoming features including:
+### 🚀 **10x Performance & Enterprise Scale**
+- **Native async support** with concurrent processing
+- **Sub-second parsing** for most document types
+- **Automatic retries** with enterprise-grade reliability
+- **99.9% uptime SLA** for production workloads
 
-- Real-time collaboration for team analysis
-- Dynamic dataset updates for live querying
-- Integration with popular BI tools
-- Automated reporting workflows
-- Enhanced visualization capabilities
+### 🧠 **SOTA AI-Powered Extraction**
+- **Highest accuracy** in the industry using cutting-edge ML models
+- **Advanced table extraction** preserving structure and formatting
+- **12+ file formats** including PDF, DOCX, PPTX, HTML, and more
+- **Smart content chunking** optimized for RAG applications
 
-Join us at Cerevox, where we're transforming how organizations find, verify, and trust their answers!
+### 🔗 **Vector Database Ready**
+- **Pre-optimized chunks** for embedding models
+- **Rich metadata extraction** including images, formatting, and structure
+- **Built-in integrations** with Pinecone, Weaviate, ChromaDB, and Qdrant
+- **Seamless RAG workflow** integration
+
+### ☁️ **Cloud-Native Architecture**
+- **7+ cloud storage** integrations (S3, SharePoint, Google Drive, Box, Dropbox)
+- **REST API** with comprehensive Python SDK
+- **Framework agnostic** - works with Django, Flask, FastAPI
+- **Kubernetes-ready** with horizontal scaling
+
+## Developer-First Experience
+
+```python
+# Get started in seconds
+pip install cerevox
+
+# Parse any document with 3 lines of code
+from cerevox import Lexa
+
+client = Lexa(api_key="your-api-key")
+documents = client.parse(["report.pdf", "data.xlsx"])
+
+# Vector DB ready chunks
+chunks = documents.get_all_text_chunks(target_size=500)
+```
+
+## Real-World Impact
+
+**Fortune 500 companies** use Cerevox to:
+- **Process millions** of documents daily with 99.9% accuracy
+- **Build RAG applications** that understand complex enterprise documents
+- **Extract structured data** from financial reports, legal contracts, and research papers
+- **Automate workflows** that previously required manual data entry
+
+## What Makes Us Different
+
+- **🎯 Accuracy**: Industry-leading accuracy with state-of-the-art AI models
+- **⚡ Speed**: 10x faster than traditional parsing solutions
+- **🔧 Developer UX**: Simple API, comprehensive SDK, extensive documentation
+- **🏢 Enterprise Ready**: SOC2 compliant, 99.9% SLA, dedicated support
+- **🤖 AI-Optimized**: Built specifically for modern AI and RAG workflows
+
+## Looking Forward
+
+We're expanding our platform with:
+- **Real-time document processing** pipelines
+- **Advanced AI extraction** for specialized document types
+- **Enhanced integrations** with popular developer tools
+- **Multi-modal capabilities** including image and video processing
+- **On-premise deployment** options for enterprise security
+
+---
+
+**Ready to transform your document processing?** Join thousands of developers building the future with Cerevox.
+
+[Get Started with Lexa →](https://cerevox.ai/lexa) | [View API Docs →](https://docs.cerevox.ai) | [Join our Discord →](https://discord.gg/cerevox)
 

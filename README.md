@@ -1,32 +1,50 @@
-# Mintlify Starter Kit
+# Cerevox Lexa Documentation
 
-Click on `Use this template` to copy the Mintlify starter kit. The starter kit contains examples including
+Professional developer documentation for [Lexa](https://cerevox.ai/lexa) - AI-powered document parsing service by Cerevox.
 
-- Guide pages
-- Navigation
-- Customizations
-- API Reference pages
-- Use of popular components
+## 🚀 What is Lexa?
 
-### 👩‍💻 Development
+Lexa is an enterprise-grade document parsing API that transforms unstructured documents into structured, searchable data. Perfect for RAG applications, data extraction, and vector database preparation.
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview the documentation changes locally. To install, use the following command
+## 📚 Documentation
 
-```
+This documentation covers:
+
+- **Getting Started**: Quick setup and authentication
+- **API Reference**: Comprehensive API documentation
+- **Examples**: Real-world usage patterns and code samples
+- **Guides**: Integration patterns and best practices
+- **Use Cases**: Industry-specific implementations
+
+## 🔗 Quick Links
+
+- **[Live Documentation](https://docs.cerevox.ai)** - Full documentation site
+- **[API Playground](https://data.cerevox.ai/docs)** - Interactive API testing
+- **[Python SDK](https://github.com/CerevoxAI/cerevox-python)** - Official Python library
+- **[Get API Key](https://cerevox.ai/lexa)** - Start using Lexa
+
+## 🛠️ Local Development
+
+This documentation is built with [Mintlify](https://mintlify.com). To run locally:
+
+```bash
+# Install Mintlify CLI
 npm i -g mintlify
-```
 
-Run the following command at the root of your documentation (where mint.json is)
-
-```
+# Preview documentation
 mintlify dev
 ```
 
-### 😎 Publishing Changes
+## 📝 Contributing
 
-Install our Github App to autopropagate changes from youre repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard. 
+We welcome contributions to improve our documentation! Please see our [Contributing Guidelines](https://github.com/CerevoxAI/cerevox-python/blob/main/CONTRIBUTING.md).
 
-#### Troubleshooting
+## 🆘 Support
 
-- Mintlify dev isn't running - Run `mintlify install` it'll re-install dependencies.
-- Page loads as a 404 - Make sure you are running in a folder with `mint.json`
+- **[Discord Community](https://discord.gg/cerevox)** - Get help and discuss
+- **[GitHub Issues](https://github.com/CerevoxAI/cerevox-python/issues)** - Report bugs
+- **[Email Support](mailto:support@cerevox.ai)** - Direct support
+
+---
+
+**Made with ❤️ by the Cerevox team**

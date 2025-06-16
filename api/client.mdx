@@ -1,0 +1,367 @@
+---
+title: "Lexa Client"
+description: "Complete reference for initializing and configuring the Lexa client"
+---
+
+## Client Initialization
+
+### Synchronous Client
+
+<CodeGroup>
+```python Basic Setup
+from cerevox import Lexa
+
+# Initialize with API key
+client = Lexa(api_key="your-api-key")
+
+# Parse documents
+documents = client.parse(["document.pdf"])
+```
+
+```python Environment Variable
+import os
+from cerevox import Lexa
+
+# Set environment variable: CEREVOX_API_KEY
+client = Lexa()  # Automatically uses CEREVOX_API_KEY
+
+documents = client.parse(["document.pdf"])
+```
+
+```python Custom Configuration
+from cerevox import Lexa
+
+client = Lexa(
+    api_key="your-api-key",
+    base_url="https://data.cerevox.ai",  # Custom endpoint
+    timeout=120.0,                       # Request timeout
+    max_retries=3,                       # Retry attempts
+    retry_delay=1.0                      # Delay between retries
+)
+```
+</CodeGroup>
+
+### Asynchronous Client
+
+<CodeGroup>
+```python Context Manager (Recommended)
+import asyncio
+from cerevox import AsyncLexa
+
+async def main():
+    async with AsyncLexa(api_key="your-api-key") as client:
+        documents = await client.parse(["document.pdf"])
+        return documents
+
+asyncio.run(main())
+```
+
+```python Manual Management
+import asyncio
+from cerevox import AsyncLexa
+
+async def main():
+    client = AsyncLexa(api_key="your-api-key")
+    try:
+        documents = await client.parse(["document.pdf"])
+        return documents
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+## Client Configuration
+
+### Parameters
+
+<ParamField path="api_key" type="string" required>
+  Your Cerevox API key. Get one at [cerevox.ai/lexa](https://cerevox.ai/lexa)
+</ParamField>
+
+<ParamField path="base_url" type="string" default="https://data.cerevox.ai">
+  Base URL for the Cerevox API endpoint
+</ParamField>
+
+<ParamField path="timeout" type="float" default="60.0">
+  Request timeout in seconds for API calls
+</ParamField>
+
+<ParamField path="max_retries" type="int" default="3">
+  Maximum number of retry attempts for failed requests
+</ParamField>
+
+<ParamField path="retry_delay" type="float" default="1.0">
+  Delay in seconds between retry attempts
+</ParamField>
+
+### Environment Variables
+
+<CodeGroup>
+```bash Environment Setup
+# Required
+export CEREVOX_API_KEY="your-api-key"
+
+# Optional overrides
+export CEREVOX_BASE_URL="https://data.cerevox.ai"
+export CEREVOX_TIMEOUT="120"
+export CEREVOX_MAX_RETRIES="5"
+```
+
+```python Python Usage
+from cerevox import Lexa
+
+# Automatically uses environment variables
+client = Lexa()
+```
+</CodeGroup>
+
+## Client Methods
+
+### Core Parsing Methods
+
+<AccordionGroup>
+<Accordion title="parse() - Parse Local Files">
+Parse local files or file-like objects.
+
+```python
+documents = client.parse(
+    files=["document.pdf", "report.docx"],
+    mode=ProcessingMode.DEFAULT,
+    progress_callback=None,
+    timeout=60.0,
+    poll_interval=2.0
+)
+```
+</Accordion>
+
+<Accordion title="parse_urls() - Parse Remote Files">
+Parse files from URLs.
+
+```python
+documents = client.parse_urls(
+    urls=["https://example.com/document.pdf"],
+    mode=ProcessingMode.DEFAULT,
+    progress_callback=None,
+    timeout=120.0,
+    poll_interval=2.0
+)
+```
+</Accordion>
+
+<Accordion title="get_job_status() - Check Job Status">
+Get the current status of a parsing job.
+
+```python
+status = client.get_job_status(job_id="job_123")
+print(f"Status: {status.status}")
+```
+</Accordion>
+</AccordionGroup>
+
+### Cloud Storage Methods
+
+<AccordionGroup>
+<Accordion title="Amazon S3 Integration">
+```python
+# List S3 buckets
+buckets = client.list_s3_buckets()
+
+# List S3 folder contents
+contents = client.list_s3_folder("bucket-name", "folder-path/")
+
+# Parse S3 folder
+documents = client.parse_s3_folder(
+    bucket="bucket-name",
+    folder_path="documents/",
+    mode=ProcessingMode.DEFAULT
+)
+```
+</Accordion>
+
+<Accordion title="Microsoft SharePoint Integration">
+```python
+# List SharePoint sites
+sites = client.list_sharepoint_sites()
+
+# List drives in a site
+drives = client.list_sharepoint_drives("site-id")
+
+# Parse SharePoint folder
+documents = client.parse_sharepoint_folder(
+    site_id="site-id",
+    drive_id="drive-id",
+    folder_path="Documents/",
+    mode=ProcessingMode.DEFAULT
+)
+```
+</Accordion>
+
+<Accordion title="Box Integration">
+```python
+# List Box folders
+folders = client.list_box_folders(parent_folder_id="0")
+
+# Parse Box folder
+documents = client.parse_box_folder(
+    folder_id="123456789",
+    mode=ProcessingMode.DEFAULT
+)
+```
+</Accordion>
+</AccordionGroup>
+
+## Processing Modes
+
+Choose the right processing mode for your use case:
+
+<CardGroup cols={2}>
+  <Card title="DEFAULT" icon="bolt">
+    **Fast and efficient**
+    - Optimized for speed
+    - Good accuracy
+    - Lower resource usage
+    - Recommended for most use cases
+  </Card>
+  
+  <Card title="ADVANCED" icon="magnifying-glass">
+    **Maximum accuracy**
+    - Highest accuracy
+    - Enhanced table extraction
+    - More thorough analysis
+    - Best for complex documents
+  </Card>
+</CardGroup>
+
+<CodeGroup>
+```python Processing Mode Usage
+from cerevox import Lexa, ProcessingMode
+
+client = Lexa(api_key="your-api-key")
+
+# Default mode (recommended) - fast and efficient
+documents = client.parse(["document.pdf"], mode=ProcessingMode.DEFAULT)
+
+# Advanced mode for maximum accuracy
+documents = client.parse(["document.pdf"], mode=ProcessingMode.ADVANCED)
+```
+</CodeGroup>
+
+## Error Handling
+
+The Lexa client provides comprehensive error handling:
+
+<CodeGroup>
+```python Basic Error Handling
+from cerevox import Lexa, LexaError
+
+client = Lexa(api_key="your-api-key")
+
+try:
+    documents = client.parse(["document.pdf"])
+    print(f"Successfully parsed {len(documents)} documents")
+except LexaError as e:
+    print(f"Lexa API error: {e.message}")
+    print(f"Error code: {e.error_code}")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+```python Advanced Error Handling
+from cerevox import Lexa, LexaError
+import time
+
+def robust_parse(client, files, max_retries=3):
+    """Parse with custom retry logic"""
+    for attempt in range(max_retries):
+        try:
+            return client.parse(files)
+        except LexaError as e:
+            if e.error_code == "RATE_LIMIT_EXCEEDED":
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Rate limited, waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            else:
+                raise e
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise e
+            print(f"Attempt {attempt + 1} failed, retrying...")
+            time.sleep(1)
+    
+    raise Exception("Max retries exceeded")
+```
+</CodeGroup>
+
+## Best Practices
+
+<AccordionGroup>
+<Accordion title="Async for Performance">
+Use the async client for better performance when processing multiple files:
+
+```python
+import asyncio
+from cerevox import AsyncLexa
+
+async def process_documents(file_paths):
+    async with AsyncLexa(api_key="your-api-key") as client:
+        # Process multiple batches concurrently
+        tasks = []
+        batch_size = 10
+        
+        for i in range(0, len(file_paths), batch_size):
+            batch = file_paths[i:i + batch_size]
+            task = client.parse(batch)
+            tasks.append(task)
+        
+        results = await asyncio.gather(*tasks)
+        return [doc for batch in results for doc in batch]
+```
+</Accordion>
+
+<Accordion title="Progress Monitoring">
+Use progress callbacks for long-running operations:
+
+```python
+def progress_callback(status):
+    print(f"Status: {status.status}")
+    if hasattr(status, 'progress') and status.progress:
+        print(f"Progress: {status.progress}")
+
+documents = client.parse(
+    ["large-document.pdf"],
+    progress_callback=progress_callback,
+    timeout=300.0  # 5 minutes for large files
+)
+```
+</Accordion>
+
+<Accordion title="Resource Management">
+Properly manage client resources:
+
+```python
+# ✅ Good: Use context manager for async
+async with AsyncLexa(api_key="key") as client:
+    documents = await client.parse(["file.pdf"])
+
+# ✅ Good: Reuse sync client
+client = Lexa(api_key="key")
+for file_batch in file_batches:
+    documents = client.parse(file_batch)
+    process_documents(documents)
+
+# ❌ Avoid: Creating new clients repeatedly
+for file in files:
+    client = Lexa(api_key="key")  # Wasteful
+    documents = client.parse([file])
+```
+</Accordion>
+</AccordionGroup>
+
+---
+
+<Card title="Next Steps" icon="arrow-right">
+  Ready to start parsing? Check out our [quickstart guide](/welcome/quickstart) or explore [real-world examples](/examples/basic-usage).
+</Card> 

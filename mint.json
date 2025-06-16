@@ -30,24 +30,75 @@
     }
   ],
   "topbarCtaButton": {
-    "name": "Sign In",
-    "url": "https://cerevox.ai/app"
+    "name": "Get API Key",
+    "url": "https://cerevox.ai/lexa"
   },
   "anchors": [
     {
+      "name": "API Playground",
+      "icon": "play",
+      "url": "https://data.cerevox.ai/docs"
+    },
+    {
       "name": "Community",
-      "icon": "linkedin",
-      "url": "https://www.linkedin.com/company/Cerevox"
+      "icon": "discord",
+      "url": "https://discord.gg/cerevox"
+    },
+    {
+      "name": "Demo",
+      "icon": "laptop-code",
+      "url": "https://cerevox.ai/lexa"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/CerevoxAI/cerevox-python"
     }
   ],
   "navigation": [
     {
-      "group": "Welcome",
-      "pages": ["welcome/introduction", "welcome/quickstart"]
+      "group": "Getting Started",
+      "pages": [
+        "welcome/overview",
+        "welcome/quickstart",
+        "welcome/authentication"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/client",
+        "api/methods",
+        "api/error-handling",
+        "api/configuration"
+      ]
+    },
+    {
+      "group": "Examples",
+      "pages": [
+        "examples/basic-usage",
+        "examples/async-operations",
+        "examples/cloud-integrations",
+        "examples/advanced-patterns"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/vector-database-integration",
+        "guides/performance-optimization",
+        "guides/best-practices"
+      ]
     },
     {
       "group": "Use Cases",
-      "pages": ["usecases/financial", "usecases/legal", "usecases/market", "usecases/model", "usecases/knowledge"]
+      "pages": [
+        "usecases/financial",
+        "usecases/legal",
+        "usecases/knowledge",
+        "usecases/model",
+        "usecases/market"
+      ]
     },
     {
       "group": "Company",

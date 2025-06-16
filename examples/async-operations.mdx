@@ -1,0 +1,632 @@
+---
+title: "Async Processing"
+description: "Process multiple documents concurrently - 10x faster than sync"
+---
+
+<Note>
+  **Why Async?** Process 100 documents in the time it takes to process 10 synchronously. Essential for high-volume applications.
+</Note>
+
+## Getting Started with Async
+
+### Your First Async Parse
+
+<CodeGroup>
+```python Single Document - Async
+import asyncio
+from cerevox import AsyncLexa
+
+async def main():
+    async with AsyncLexa() as client:  # Uses CEREVOX_API_KEY
+        documents = await client.parse("document.pdf")
+        print(f"✅ Async parsing complete: {len(documents[0].content)} chars")
+
+# Run it
+asyncio.run(main())
+```
+
+```python Multiple Documents - Concurrent
+import asyncio
+from cerevox import AsyncLexa
+
+async def main():
+    async with AsyncLexa() as client:
+        # Process multiple files concurrently - much faster!
+        documents = await client.parse([
+            "contract.pdf",
+            "invoice.xlsx", 
+            "report.docx"
+        ])
+        
+        print(f"✅ Processed {len(documents)} documents concurrently")
+        for i, doc in enumerate(documents, 1):
+            print(f"  📄 Doc {i}: {len(doc.content)} chars, {len(doc.tables)} tables")
+
+asyncio.run(main())
+```
+
+```python Batch Processing - Production Ready
+import asyncio
+from cerevox import AsyncLexa
+
+async def process_document_batch(files):
+    async with AsyncLexa() as client:
+        # Process large batches efficiently
+        documents = await client.parse(
+            files,
+            timeout=300.0,      # 5 minute timeout for large batches
+            poll_interval=5.0   # Check status every 5 seconds
+        )
+        return documents
+
+# Process 50+ documents efficiently
+files = [f"documents/doc_{i}.pdf" for i in range(50)]
+documents = asyncio.run(process_document_batch(files))
+print(f"✅ Processed {len(documents)} documents in one batch")
+```
+</CodeGroup>
+
+## Real-World Performance Examples
+
+### High-Volume Document Processing
+
+<CodeGroup>
+```python Financial Document Processing
+import asyncio
+from cerevox import AsyncLexa, ProcessingMode
+
+async def process_financial_documents():
+    """Process hundreds of financial documents efficiently"""
+    
+    # Financial documents that need processing
+    financial_docs = [
+        "invoices/batch_1/*.pdf",      # 100+ invoices
+        "statements/q1_2024/*.pdf",    # Bank statements 
+        "contracts/2024/*.docx",       # Legal contracts
+        "reports/financial/*.xlsx"     # Financial reports
+    ]
+    
+    async with AsyncLexa() as client:
+        # Process all document types concurrently
+        start_time = asyncio.get_event_loop().time()
+        
+        documents = await client.parse(
+            financial_docs,
+            mode=ProcessingMode.ADVANCED,  # More accurate but slower for financial data
+            timeout=600.0  # 10 minute timeout for large batches
+        )
+        
+        processing_time = asyncio.get_event_loop().time() - start_time
+        
+        print(f"✅ Processed {len(documents)} financial documents")
+        print(f"⚡ Processing time: {processing_time:.2f} seconds")
+        print(f"📊 Average: {processing_time/len(documents):.2f} seconds per document")
+        
+        # Extract structured financial data
+        total_tables = sum(len(doc.tables) for doc in documents)
+        print(f"💰 Extracted {total_tables} financial tables")
+        
+        return documents
+
+# Process financial documents at scale
+documents = asyncio.run(process_financial_documents())
+```
+
+```python Research Paper Analysis
+import asyncio
+from cerevox import AsyncLexa
+
+async def analyze_research_papers():
+    """Process academic papers for research analysis"""
+    
+    papers = [
+        "papers/ai_research_2024/*.pdf",
+        "papers/machine_learning/*.pdf", 
+        "papers/data_science/*.pdf"
+    ]
+    
+    async with AsyncLexa() as client:
+        # Process academic papers concurrently
+        documents = await client.parse(papers)
+        
+        # Get research-ready chunks
+        all_chunks = []
+        for doc in documents:
+            chunks = doc.get_text_chunks(
+                target_size=800,        # Larger chunks for research
+                overlap_size=100,       # More overlap for context
+                preserve_citations=True # Keep academic citations
+            )
+            all_chunks.extend(chunks)
+        
+        print(f"📚 Processed {len(documents)} research papers")
+        print(f"🔍 Generated {len(all_chunks)} research chunks")
+        print(f"📊 Found {sum(len(doc.tables) for doc in documents)} data tables")
+        
+        return documents, all_chunks
+
+# Analyze research at scale
+documents, chunks = asyncio.run(analyze_research_papers())
+```
+</CodeGroup>
+
+### RAG System Document Processing
+
+<CodeGroup>
+```python Knowledge Base Processing
+import asyncio
+from cerevox import AsyncLexa
+
+async def build_knowledge_base():
+    """Process documents for RAG knowledge base"""
+    
+    knowledge_docs = [
+        "knowledge_base/product_docs/*.pdf",
+        "knowledge_base/user_manuals/*.docx", 
+        "knowledge_base/faqs/*.html",
+        "knowledge_base/support_articles/*.md"
+    ]
+    
+    async with AsyncLexa() as client:
+        # Process all knowledge base documents
+        documents = await client.parse(knowledge_docs)
+        
+        # Generate RAG-optimized chunks
+        rag_chunks = []
+        for doc in documents:
+            chunks = doc.get_text_chunks(
+                target_size=500,        # Perfect for embeddings
+                overlap_size=50,        # Prevent context loss
+                include_metadata=True   # Rich metadata for retrieval
+            )
+            rag_chunks.extend(chunks)
+        
+        print(f"📚 Processed knowledge base: {len(documents)} documents")
+        print(f"🔗 Generated {len(rag_chunks)} RAG chunks")
+        print(f"💾 Ready for vector database: {sum(len(chunk.content) for chunk in rag_chunks)} total characters")
+        
+        # Each chunk is ready for your vector database
+        return rag_chunks
+
+# Build your RAG knowledge base
+rag_chunks = asyncio.run(build_knowledge_base())
+
+# Ready for vector database insertion
+print(f"✅ {len(rag_chunks)} chunks ready for embedding and storage")
+```
+
+```python Multi-Source RAG Processing
+import asyncio
+from cerevox import AsyncLexa
+
+async def process_multi_source_rag():
+    """Process documents from multiple sources for comprehensive RAG"""
+    
+    async def process_source(client, source_name, files):
+        """Process documents from a specific source"""
+        documents = await client.parse(files)
+        
+        # Tag chunks with source information
+        chunks = []
+        for doc in documents:
+            doc_chunks = doc.get_text_chunks(target_size=500)
+            for chunk in doc_chunks:
+                chunk.metadata['source_system'] = source_name
+                chunks.append(chunk)
+        
+        return chunks
+    
+    async with AsyncLexa() as client:
+        # Process multiple sources concurrently
+        tasks = [
+            process_source(client, "documentation", ["docs/*.pdf"]),
+            process_source(client, "support", ["support/*.docx"]), 
+            process_source(client, "knowledge", ["kb/*.html"]),
+            process_source(client, "training", ["training/*.pdf"])
+        ]
+        
+        # Wait for all sources to complete
+        source_results = await asyncio.gather(*tasks)
+        
+        # Combine all chunks
+        all_chunks = []
+        for chunks in source_results:
+            all_chunks.extend(chunks)
+        
+        print(f"🔗 Multi-source RAG ready: {len(all_chunks)} chunks")
+        print(f"📊 Sources processed: {len(source_results)}")
+        
+        return all_chunks
+
+# Build comprehensive RAG system
+rag_chunks = asyncio.run(process_multi_source_rag())
+```
+</CodeGroup>
+
+## Controlled Concurrency Patterns
+
+### Production-Grade Concurrency Control
+
+<CodeGroup>
+```python Controlled Concurrency
+import asyncio
+from cerevox import AsyncLexa, LexaError
+
+async def process_with_concurrency_limit(files, max_concurrent=5):
+    """Process files with controlled concurrency - prevents overwhelming the API"""
+    
+    semaphore = asyncio.Semaphore(max_concurrent)
+    results = []
+    
+    async def process_single_file(client, file):
+        async with semaphore:  # Limit concurrent operations
+            try:
+                documents = await client.parse([file])
+                print(f"✅ Processed: {file}")
+                return documents[0] if documents else None
+            except LexaError as e:
+                print(f"❌ Failed {file}: {e.message}")
+                return None
+    
+    async with AsyncLexa() as client:
+        # Create tasks for all files
+        tasks = [process_single_file(client, file) for file in files]
+        
+        # Process with controlled concurrency
+        completed_results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter successful results
+        successful_docs = [r for r in completed_results if r and not isinstance(r, Exception)]
+        
+        print(f"✅ Successfully processed {len(successful_docs)}/{len(files)} files")
+        return successful_docs
+
+# Process large document sets safely
+files = [f"documents/batch_{i}.pdf" for i in range(100)]
+documents = asyncio.run(process_with_concurrency_limit(files, max_concurrent=10))
+```
+
+```python Batch Processing with Error Recovery
+import asyncio
+from cerevox import AsyncLexa, LexaError
+
+async def robust_batch_processing(all_files, batch_size=20):
+    """Process files in batches with error recovery"""
+    
+    # Split into batches
+    batches = [all_files[i:i + batch_size] for i in range(0, len(all_files), batch_size)]
+    
+    async def process_batch_with_retry(client, batch, batch_num, max_retries=3):
+        for attempt in range(max_retries):
+            try:
+                print(f"🔄 Processing batch {batch_num} (attempt {attempt + 1})")
+                documents = await client.parse(batch, timeout=300.0)
+                print(f"✅ Batch {batch_num} complete: {len(documents)} documents")
+                return documents
+                
+            except LexaError as e:
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff
+                    print(f"⏳ Batch {batch_num} failed, retrying in {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    print(f"❌ Batch {batch_num} failed after {max_retries} attempts")
+                    return []
+        return []
+    
+    async with AsyncLexa() as client:
+        # Process batches with limited concurrency
+        semaphore = asyncio.Semaphore(3)  # Max 3 concurrent batches
+        
+        async def controlled_batch_processing(batch, batch_num):
+            async with semaphore:
+                return await process_batch_with_retry(client, batch, batch_num)
+        
+        # Create tasks for all batches
+        tasks = [
+            controlled_batch_processing(batch, i + 1) 
+            for i, batch in enumerate(batches)
+        ]
+        
+        # Process all batches
+        batch_results = await asyncio.gather(*tasks)
+        
+        # Combine successful results
+        all_documents = []
+        for batch_docs in batch_results:
+            all_documents.extend(batch_docs)
+        
+        print(f"🎉 Batch processing complete: {len(all_documents)} total documents")
+        return all_documents
+
+# Process thousands of documents reliably
+large_file_list = [f"archive/document_{i}.pdf" for i in range(1000)]
+documents = asyncio.run(robust_batch_processing(large_file_list))
+```
+</CodeGroup>
+
+## Advanced Async Patterns
+
+### Progress Monitoring & Real-time Updates
+
+<CodeGroup>
+```python Real-time Progress Tracking
+import asyncio
+from cerevox import AsyncLexa
+
+async def process_with_realtime_progress(files):
+    """Process files with real-time progress updates"""
+    
+    progress_data = {
+        'total': len(files),
+        'completed': 0,
+        'failed': 0,
+        'in_progress': 0
+    }
+    
+    def update_progress(status, file_name):
+        """Update progress based on status"""
+        if status == 'started':
+            progress_data['in_progress'] += 1
+        elif status == 'completed':
+            progress_data['in_progress'] -= 1
+            progress_data['completed'] += 1
+        elif status == 'failed':
+            progress_data['in_progress'] -= 1
+            progress_data['failed'] += 1
+        
+        # Print progress bar
+        total = progress_data['total']
+        completed = progress_data['completed']
+        failed = progress_data['failed']
+        in_progress = progress_data['in_progress']
+        
+        progress_pct = (completed + failed) / total * 100
+        print(f"\r📊 Progress: {progress_pct:.1f}% | ✅ {completed} | ❌ {failed} | 🔄 {in_progress}", end='')
+    
+    async def process_single_with_progress(client, file):
+        update_progress('started', file)
+        try:
+            documents = await client.parse([file])
+            update_progress('completed', file)
+            return documents[0] if documents else None
+        except Exception as e:
+            update_progress('failed', file)
+            return None
+    
+    async with AsyncLexa() as client:
+        # Process all files with progress tracking
+        tasks = [process_single_with_progress(client, file) for file in files]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        print()  # New line after progress bar
+        successful_docs = [r for r in results if r and not isinstance(r, Exception)]
+        
+        print(f"🎉 Processing complete!")
+        print(f"✅ Successful: {len(successful_docs)}")
+        print(f"❌ Failed: {len(files) - len(successful_docs)}")
+        
+        return successful_docs
+
+# Process with real-time progress
+files = [f"documents/file_{i}.pdf" for i in range(50)]
+documents = asyncio.run(process_with_realtime_progress(files))
+```
+
+```python Queue-based Processing
+import asyncio
+from asyncio import Queue
+from cerevox import AsyncLexa
+
+async def queue_based_processing(files, num_workers=5):
+    """Process files using a queue with multiple workers"""
+    
+    # Create queues
+    file_queue = Queue()
+    result_queue = Queue()
+    
+    # Add all files to the queue
+    for file in files:
+        await file_queue.put(file)
+    
+    async def worker(client, worker_id):
+        """Worker function to process files from queue"""
+        processed = 0
+        
+        while True:
+            try:
+                # Get file from queue (timeout after 1 second)
+                file = await asyncio.wait_for(file_queue.get(), timeout=1.0)
+                
+                # Process the file
+                try:
+                    documents = await client.parse([file])
+                    await result_queue.put(('success', file, documents))
+                    processed += 1
+                    print(f"👤 Worker {worker_id}: processed {file} ({processed} total)")
+                    
+                except Exception as e:
+                    await result_queue.put(('error', file, str(e)))
+                    print(f"👤 Worker {worker_id}: failed {file}")
+                
+                # Mark task as done
+                file_queue.task_done()
+                
+            except asyncio.TimeoutError:
+                # No more files in queue, worker can exit
+                print(f"👤 Worker {worker_id}: completed ({processed} files processed)")
+                break
+    
+    async with AsyncLexa() as client:
+        # Start worker tasks
+        workers = [
+            asyncio.create_task(worker(client, i + 1)) 
+            for i in range(num_workers)
+        ]
+        
+        # Wait for all files to be processed
+        await file_queue.join()
+        
+        # Cancel workers
+        for w in workers:
+            w.cancel()
+        
+        # Collect results
+        results = []
+        while not result_queue.empty():
+            results.append(await result_queue.get())
+        
+        # Process results
+        successful_docs = []
+        failed_files = []
+        
+        for status, file, data in results:
+            if status == 'success':
+                successful_docs.extend(data)
+            else:
+                failed_files.append((file, data))
+        
+        print(f"🎯 Queue processing complete:")
+        print(f"✅ Successful: {len(successful_docs)}")
+        print(f"❌ Failed: {len(failed_files)}")
+        
+        return successful_docs, failed_files
+
+# Process with worker queue
+files = [f"documents/doc_{i}.pdf" for i in range(100)]
+successful_docs, failed_files = asyncio.run(queue_based_processing(files, num_workers=8))
+```
+</CodeGroup>
+
+## Integration with Web Frameworks
+
+### FastAPI Integration
+
+<CodeGroup>
+```python FastAPI Async Endpoint
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks
+from cerevox import AsyncLexa
+import asyncio
+
+app = FastAPI()
+
+# Global client (reuse connection)
+lexa_client = None
+
+@app.on_event("startup")
+async def startup_event():
+    global lexa_client
+    lexa_client = AsyncLexa()
+
+@app.on_event("shutdown") 
+async def shutdown_event():
+    if lexa_client:
+        await lexa_client.close()
+
+@app.post("/parse-documents/")
+async def parse_documents(files: list[UploadFile] = File(...)):
+    """Parse uploaded documents asynchronously"""
+    
+    # Read file contents
+    file_contents = []
+    for file in files:
+        content = await file.read()
+        file_contents.append(content)
+    
+    # Parse documents concurrently
+    documents = await lexa_client.parse(file_contents)
+    
+    # Return structured results
+    results = []
+    for i, doc in enumerate(documents):
+        results.append({
+            'filename': files[i].filename,
+            'content_length': len(doc.content),
+            'tables': len(doc.tables),
+            'images': len(doc.images),
+            'content_preview': doc.content[:200]
+        })
+    
+    return {
+        'status': 'success',
+        'processed': len(results),
+        'results': results
+    }
+
+# Run with: uvicorn main:app --reload
+```
+
+```python Background Processing
+from fastapi import FastAPI, BackgroundTasks
+from cerevox import AsyncLexa
+import asyncio
+from typing import Dict
+
+app = FastAPI()
+processing_status: Dict[str, dict] = {}
+
+async def background_parse_task(task_id: str, files: list):
+    """Background task for processing large document batches"""
+    
+    processing_status[task_id] = {
+        'status': 'processing',
+        'progress': 0,
+        'total': len(files),
+        'results': []
+    }
+    
+    try:
+        async with AsyncLexa() as client:
+            documents = await client.parse(files)
+            
+            # Store results
+            results = []
+            for doc in documents:
+                results.append({
+                    'content_length': len(doc.content),
+                    'tables': len(doc.tables),
+                    'chunks': len(doc.get_text_chunks())
+                })
+            
+            processing_status[task_id] = {
+                'status': 'completed',
+                'progress': 100,
+                'total': len(files),
+                'results': results
+            }
+            
+    except Exception as e:
+        processing_status[task_id] = {
+            'status': 'error',
+            'error': str(e),
+            'progress': 0,
+            'total': len(files)
+        }
+
+@app.post("/parse-batch/")
+async def parse_batch(background_tasks: BackgroundTasks, files: list[str]):
+    """Start background parsing task"""
+    
+    task_id = f"task_{len(processing_status) + 1}"
+    
+    # Start background processing
+    background_tasks.add_task(background_parse_task, task_id, files)
+    
+    return {'task_id': task_id, 'status': 'started'}
+
+@app.get("/parse-status/{task_id}")
+async def get_parse_status(task_id: str):
+    """Get status of parsing task"""
+    
+    if task_id not in processing_status:
+        return {'error': 'Task not found'}
+    
+    return processing_status[task_id]
+```
+</CodeGroup>
+
+---
+
+<Tip>
+  **Performance Tip:** Async processing is **10x faster** for multiple documents. Always use async in production for document batches larger than 5 files.
+</Tip>
