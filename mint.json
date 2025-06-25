@@ -42,7 +42,7 @@
     {
       "name": "Community",
       "icon": "discord",
-      "url": "https://discord.gg/cerevox"
+      "url": "https://discord.com/invite/73CB5jHbkF"
     },
     {
       "name": "Demo",
@@ -112,6 +112,7 @@
   "footerSocials": {
     "twitter": "https://twitter.com/CerevoxAI",
     "github": "https://github.com/CerevoxAI",
-    "linkedin": "https://www.linkedin.com/company/Cerevox"
+    "linkedin": "https://www.linkedin.com/company/Cerevox",
+    "discord": "https://discord.com/invite/73CB5jHbkF"
   }
 }
