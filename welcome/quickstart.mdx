@@ -2,12 +2,12 @@
 title: 'Quickstart'
 ---
 
-# Parse Your First Document in 3 Minutes ⚡
+# Build Your First RAG Q&A System in 5 Minutes 🦛
 
-This quickstart gets you from zero to parsing documents with Lexa. By the end, you'll have made your first successful API call.
+This quickstart gets you from zero to asking questions over your documents with AI-powered answers and source citations.
 
 <Note>
-  **Requirements:** Python 3.9+ • 3 minutes of your time
+  **Requirements:** Python 3.9+ • 5 minutes of your time
 </Note>
 
 ## Step 1: Installation (30 seconds)
@@ -21,7 +21,7 @@ pip install cerevox
 # Using conda
 conda install -c conda-forge cerevox
 
-# Using poetry  
+# Using poetry
 poetry add cerevox
 
 # Using pipenv
@@ -33,7 +33,7 @@ pipenv install cerevox
 
 <Steps>
   <Step title="Get your API key">
-    Visit [cerevox.ai/lexa](https://cerevox.ai/lexa) and sign up for your free API key
+    Visit [cerevox.ai](https://cerevox.ai) and sign up for your free API key
   </Step>
   <Step title="Copy the key">
     Save your API key - you'll need it in the next step
@@ -50,9 +50,9 @@ pipenv install cerevox
   </Tab>
   <Tab title="Direct in Code">
     ```python
-    from cerevox import Lexa
-    
-    client = Lexa(api_key="your-api-key-here")
+    from cerevox import Hippo
+
+    hippo = Hippo(api_key="your-api-key-here")
     ```
   </Tab>
   <Tab title=".env File">
@@ -62,205 +62,321 @@ pipenv install cerevox
     ```python
     import os
     from dotenv import load_dotenv
-    from cerevox import Lexa
-    
+    from cerevox import Hippo
+
     load_dotenv()
-    client = Lexa()  # Automatically reads from environment
+    hippo = Hippo()  # Automatically reads from environment
     ```
   </Tab>
 </Tabs>
 
-## Step 4: First API Call (60 seconds)
+## Step 4: Build RAG Q&A System (3 minutes)
 
-Copy and run this code to parse your first document:
+Copy and run this code to create your first AI Q&A system:
 
-<Tabs>
-  <Tab title="Parse a File">
-    ```python
-    from cerevox import Lexa
-    
-    # Initialize client (uses CEREVOX_API_KEY from environment)
-    client = Lexa()
-    
-    # Parse a local file - replace with your file path
-    documents = client.parse(["path/to/your/document.pdf"])
-    
-    # See what you got back
-    doc = documents[0]
-    print(f"✅ Success! Extracted {len(doc.content)} characters")
-    print(f"📊 Found {len(doc.tables)} tables")
-    print(f"📄 Content preview: {doc.content[:200]}...")
-    
-    # That's it! Your document is now structured data
-    ```
-  </Tab>
-  
-  <Tab title="Parse Text Content">
-    ```python
-    from cerevox import Lexa
-    
-    # Parse raw text content (perfect for testing)
-    client = Lexa()
-    content = b"Invoice #12345\nTotal: $1,299.99\nVendor: Acme Corp"
-    
-    documents = client.parse(content)
-    doc = documents[0]
-    
-    print(f"✅ Parsed: {doc.content}")
-    # Returns: "Invoice #12345\nTotal: $1,299.99\nVendor: Acme Corp"
-    
-    # Ready for your application!
-    ```
-  </Tab>
-  
-  <Tab title="Parse from URL">
-    ```python
-    from cerevox import Lexa
-    
-    client = Lexa()
-    
-    # Parse documents directly from URLs
-    documents = client.parse_urls([
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    ])
-    
-    print(f"✅ Parsed {len(documents)} documents from URL")
-    print(f"📄 Content: {documents[0].content[:100]}...")
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+```python Complete RAG Workflow
+from cerevox import Hippo
 
-## Step 5: Test Your Setup (30 seconds)
+# Initialize Hippo (uses CEREVOX_API_KEY from environment)
+hippo = Hippo()
 
-Run this verification script to confirm everything works:
+# 1. Create a folder for your knowledge base
+folder = hippo.create_folder(
+    name="Product Documentation",
+    description="User guides and API docs"
+)
+print(f"✅ Created folder: {folder.name} (ID: {folder.id})")
 
-```python
-from cerevox import Lexa, LexaError
+# 2. Upload documents to the folder
+print("📤 Uploading documents...")
 
-def verify_setup():
-    try:
-        client = Lexa()
-        
-        # Quick test with sample content
-        test_content = b"Test document for Lexa API verification."
-        documents = client.parse(test_content)
-        
-        if documents and len(documents) > 0:
-            print("🎉 Perfect! Lexa is working correctly.")
-            print(f"📄 Test result: {documents[0].content}")
-            return True
-    
-    except LexaError as e:
-        print(f"❌ API Error: {e.message}")
-        print("💡 Check your API key and try again")
-        return False
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return False
+# Upload from local file
+file1 = hippo.upload_file(
+    folder_id=folder.id,
+    file_path="user-guide.pdf"
+)
 
-# Run verification
-if verify_setup():
-    print("\n✅ You're ready to parse documents with Lexa!")
+# Upload from URL
+file2 = hippo.upload_file_from_url(
+    folder_id=folder.id,
+    file_url="https://example.com/api-docs.pdf",
+    file_name="api-docs.pdf"
+)
+
+print(f"✅ Uploaded {file1.name} and {file2.name}")
+
+# 3. Create a chat session
+chat = hippo.create_chat(
+    folder_id=folder.id,
+    chat_name="Technical Support Q&A"
+)
+print(f"✅ Created chat session: {chat.name}")
+
+# 4. Ask questions and get AI-powered answers!
+questions = [
+    "How do I authenticate users?",
+    "What are the API rate limits?",
+    "How do I handle errors?"
+]
+
+for question in questions:
+    print(f"\n❓ Question: {question}")
+
+    answer = hippo.submit_ask(
+        chat_id=chat.id,
+        question=question
+    )
+
+    print(f"💡 Answer: {answer.response}")
+    print(f"📚 Sources: {len(answer.sources)} citations")
+
+    # Show source details
+    for source in answer.sources[:2]:  # First 2 sources
+        print(f"  → {source.file_name} (Page {source.page_number})")
+
+print("\n🎉 Your RAG Q&A system is working!")
 ```
 
+```python Async Version (Recommended)
+import asyncio
+from cerevox import AsyncHippo
+
+async def main():
+    async with AsyncHippo() as hippo:
+        # 1. Create folder
+        folder = await hippo.create_folder("Product Docs")
+
+        # 2. Upload multiple files concurrently
+        files = await asyncio.gather(
+            hippo.upload_file(folder.id, "guide.pdf"),
+            hippo.upload_file(folder.id, "docs.pdf")
+        )
+        print(f"✅ Uploaded {len(files)} documents")
+
+        # 3. Create chat
+        chat = await hippo.create_chat(folder.id, "Support Q&A")
+
+        # 4. Ask questions
+        answer = await hippo.submit_ask(
+            chat.id,
+            "How do I get started?"
+        )
+
+        print(f"💡 {answer.response}")
+        print(f"📚 {len(answer.sources)} sources")
+
+asyncio.run(main())
+```
+
+```python Simple Q&A Example
+from cerevox import Hippo
+
+hippo = Hippo()
+
+# Quick setup: Create folder, upload, create chat
+folder = hippo.create_folder("My Docs")
+hippo.upload_file(folder.id, "document.pdf")
+chat = hippo.create_chat(folder.id, "Q&A")
+
+# Ask your first question
+answer = hippo.submit_ask(
+    chat_id=chat.id,
+    question="What is the main topic of this document?"
+)
+
+print(f"Answer: {answer.response}")
+print(f"Confidence: {answer.confidence_score}")
+
+# That's it! 80% cost reduction, flagship accuracy
+```
+</CodeGroup>
+
 <Check>
-  **You're Ready!** 🎉 Lexa is configured and working. Start parsing your documents!
+  **You're Ready!** 🎉 You've built your first RAG Q&A system with 80% cost savings!
 </Check>
 
-## What's Next?
+## What Just Happened?
+
+<AccordionGroup>
+  <Accordion icon="folder" title="1. Created Knowledge Base">
+    Folders organize your documents into searchable collections. Each folder becomes an isolated knowledge base for your AI agent.
+  </Accordion>
+
+  <Accordion icon="upload" title="2. Uploaded Documents">
+    Hippo automatically processes and indexes your documents for semantic search. Supports PDFs, DOCX, PPTX, and more.
+  </Accordion>
+
+  <Accordion icon="comments" title="3. Created Chat Session">
+    Chat sessions maintain conversation context. Each chat remembers previous questions for follow-up queries.
+  </Accordion>
+
+  <Accordion icon="wand-magic-sparkles" title="4. AI-Powered Answers">
+    `submit_ask()` retrieves relevant chunks (70% smaller context) and generates answers with source citations. **80% cost reduction** vs. full document retrieval!
+  </Accordion>
+</AccordionGroup>
+
+## Understanding the Cost Savings
 
 <CardGroup cols={2}>
-  <Card
-    title="Real Examples"
-    icon="laptop-code"
-    href="/examples/basic-usage"
-  >
-    Copy-paste ready examples with real data
+  <Card icon="chart-line" color="#16a34a">
+    **Traditional RAG**
+    - Sends entire documents
+    - Large context windows
+    - High token costs
+    - Slower responses
   </Card>
-  <Card
-    title="Async Processing"
-    icon="zap"
-    href="/examples/async-operations"
-  >
-    Process multiple documents concurrently (recommended)
-  </Card>
-  <Card
-    title="Vector DB Integration"
-    icon="database"
-    href="/guides/vector-database-integration"
-  >
-    Get chunks ready for your RAG applications
-  </Card>
-  <Card
-    title="API Reference"
-    icon="code"
-    href="/api/client"
-  >
-    Complete method signatures and parameters
+  <Card icon="sparkles" color="#0285c7">
+    **Hippo RAG**
+    - Only relevant chunks (70% smaller)
+    - Precision retrieval
+    - 80% cost reduction
+    - 99.5% accuracy match
   </Card>
 </CardGroup>
 
-## Common Next Steps
+## Next Steps
+
+<Tabs>
+  <Tab title="Learn Hippo">
+    <CardGroup cols={2}>
+      <Card
+        title="Hippo Overview"
+        icon="hippo"
+        href="/hippo/overview"
+      >
+        Complete guide to RAG capabilities
+      </Card>
+      <Card
+        title="Folder Management"
+        icon="folder-tree"
+        href="/hippo/folders"
+      >
+        Organize documents effectively
+      </Card>
+      <Card
+        title="Q&A Best Practices"
+        icon="lightbulb"
+        href="/hippo/questions"
+      >
+        Optimize answer quality
+      </Card>
+      <Card
+        title="RAG Examples"
+        icon="code"
+        href="/examples/rag-workflow"
+      >
+        Real-world implementation patterns
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="Parse Documents (Lexa)">
+    <Note>
+      Need to extract structured data from documents before using Hippo? Use **Lexa** for document parsing.
+    </Note>
+
+    ```python
+    from cerevox import Lexa
+
+    client = Lexa()
+
+    # Parse documents into structured data
+    documents = client.parse(["contract.pdf"])
+
+    # Get vector DB optimized chunks
+    chunks = documents.get_all_text_chunks(target_size=500)
+    print(f"Ready for embedding: {len(chunks)} chunks")
+    ```
+
+    <Card
+      title="Lexa Documentation"
+      icon="file-lines"
+      href="/lexa/overview"
+    >
+      Learn about document parsing capabilities
+    </Card>
+  </Tab>
+
+  <Tab title="Account Management">
+    ```python
+    from cerevox import Account
+
+    account = Account()
+
+    # Get account info
+    info = account.get_account_info()
+    print(f"Plan: {info.plan}")
+
+    # Check usage
+    usage = account.get_usage()
+    print(f"API calls: {usage.total_requests}")
+    ```
+
+    <Card
+      title="Account API"
+      icon="user"
+      href="/account/overview"
+    >
+      Manage authentication and usage
+    </Card>
+  </Tab>
+</Tabs>
+
+## Common Operations
 
 <AccordionGroup>
-  <Accordion icon="bolt" title="Async Processing (Recommended)">
+  <Accordion icon="list" title="List Your Folders">
     ```python
-    import asyncio
-    from cerevox import AsyncLexa
-    
-    async def parse_multiple():
-        async with AsyncLexa() as client:
-            # Process multiple files concurrently - much faster!
-            documents = await client.parse([
-                "report1.pdf", 
-                "report2.docx",
-                "data.xlsx"
-            ])
-            
-            print(f"✅ Processed {len(documents)} documents")
-            
-            # Get vector DB ready chunks
-            chunks = documents.get_all_text_chunks(target_size=500)
-            print(f"🔗 Ready for embedding: {len(chunks)} chunks")
-    
-    asyncio.run(parse_multiple())
+    # Get all folders
+    folders = hippo.get_folders()
+
+    for folder in folders:
+        print(f"{folder.name}: {folder.file_count} files")
     ```
   </Accordion>
-  
-  <Accordion icon="cloud" title="Cloud Storage Integration">
+
+  <Accordion icon="file" title="List Files in Folder">
     ```python
-    # Parse from Amazon S3
-    documents = client.parse_s3_folder(
-        bucket_name="my-documents",
-        folder_path="invoices/"
-    )
-    
-    # Parse from SharePoint
-    documents = client.parse_sharepoint_folder(
-        site_id="your-site-id",
-        drive_id="your-drive-id", 
-        folder_path="Documents"
-    )
-    
-    print(f"✅ Processed {len(documents)} documents from cloud storage")
+    # Get files in a folder
+    files = hippo.get_files(folder_id=folder.id)
+
+    for file in files:
+        print(f"{file.name} - {file.status}")
     ```
   </Accordion>
-  
-  <Accordion icon="database" title="Vector Database Ready">
+
+  <Accordion icon="comments" title="List Chat Sessions">
     ```python
-    # Parse and get RAG-optimized chunks
-    documents = client.parse(["document.pdf"])
-    
-    chunks = documents.get_all_text_chunks(
-        target_size=500,        # Perfect for most embeddings
-        overlap_size=50,        # Prevents context loss
-        include_metadata=True   # Rich metadata included
-    )
-    
-    # Each chunk is ready for your vector database
-    for chunk in chunks[:3]:
-        print(f"Chunk: {chunk.content[:100]}...")
-        print(f"Metadata: {chunk.metadata}")
+    # Get all chats for a folder
+    chats = hippo.get_chats(folder_id=folder.id)
+
+    for chat in chats:
+        print(f"{chat.name}: {chat.message_count} messages")
+    ```
+  </Accordion>
+
+  <Accordion icon="history" title="Get Previous Answers">
+    ```python
+    # Get all Q&A history for a chat
+    asks = hippo.get_asks(chat_id=chat.id)
+
+    for ask in asks:
+        print(f"Q: {ask.question}")
+        print(f"A: {ask.response}\n")
+    ```
+  </Accordion>
+
+  <Accordion icon="trash" title="Clean Up Resources">
+    ```python
+    # Delete a chat
+    hippo.delete_chat(chat_id=chat.id)
+
+    # Delete a file
+    hippo.delete_file(file_id=file.id)
+
+    # Delete a folder (and all its contents)
+    hippo.delete_folder(folder_id=folder.id)
     ```
   </Accordion>
 </AccordionGroup>
@@ -270,38 +386,49 @@ if verify_setup():
 <AccordionGroup>
   <Accordion icon="key" title="Authentication Problems">
     **Error:** `Authentication failed` or `Invalid API key`
-    
+
     **Quick fixes:**
-    - Double-check your API key from [cerevox.ai/lexa](https://cerevox.ai/lexa)
-    - Verify `CEREVOX_API_KEY` environment variable is set correctly  
+    - Double-check your API key from [cerevox.ai](https://cerevox.ai)
+    - Verify `CEREVOX_API_KEY` environment variable is set correctly
     - Remove any extra spaces or quotes around the key
-    - Try passing the key directly: `Lexa(api_key="your-key")`
+    - Try passing the key directly: `Hippo(api_key="your-key")`
   </Accordion>
-  
-  <Accordion icon="wifi" title="Connection Issues">
-    **Error:** `Connection timeout` or `Network error`
-    
+
+  <Accordion icon="upload" title="Upload Issues">
+    **Error:** File upload fails or times out
+
     **Quick fixes:**
-    - Check internet connection
-    - Increase timeout: `client.parse(files, timeout=120.0)`
-    - Verify firewall allows HTTPS connections to `data.cerevox.ai`
-    - Test with smaller files first
+    - Check file exists: `os.path.exists("your-file.pdf")`
+    - Verify file permissions (must be readable)
+    - For large files, increase timeout: `hippo.upload_file(folder_id, file, timeout=300)`
+    - Supported formats: PDF, DOCX, PPTX, XLSX, TXT, HTML, CSV
   </Accordion>
-  
-  <Accordion icon="file-exclamation" title="File Issues">
-    **Error:** `File not found` or parsing errors
-    
-    **Quick fixes:**
-    - Verify file path is correct: `os.path.exists("your-file.pdf")`
-    - Check file permissions (must be readable)
-    - Supported formats: PDF, DOCX, XLSX, PPTX, HTML, CSV, TXT, and more
-    - Try with the test content example above first
+
+  <Accordion icon="clock" title="Processing Time">
+    **Question:** How long does document processing take?
+
+    **Answer:**
+    - Small files (< 10 pages): 10-30 seconds
+    - Medium files (10-100 pages): 30-120 seconds
+    - Large files (> 100 pages): 2-5 minutes
+    - Use async API for better performance with multiple files
+    - Files are queued and processed automatically
+  </Accordion>
+
+  <Accordion icon="message-question" title="Answer Quality">
+    **Question:** How can I improve answer quality?
+
+    **Tips:**
+    - Upload relevant documents only
+    - Use descriptive folder and chat names
+    - Ask specific, clear questions
+    - Review source citations to verify answers
+    - See [Q&A Best Practices](/hippo/questions) for more tips
   </Accordion>
 </AccordionGroup>
 
 ---
 
 <Tip>
-  **Ready to build?** Check out our [code examples](/examples/basic-usage) or join the [Discord community](https://discord.gg/cerevox) for help.
+  **Ready to scale?** Check out our [RAG optimization guide](/guides/rag-optimization) or join the [Discord community](https://discord.gg/cerevox) for help.
 </Tip>
-

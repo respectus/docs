@@ -65,12 +65,32 @@
       ]
     },
     {
-      "group": "API Reference",
+      "group": "Hippo - RAG & Retrieval",
+      "pages": [
+        "hippo/overview",
+        "hippo/quickstart",
+        "hippo/folders",
+        "hippo/files",
+        "hippo/chat",
+        "hippo/questions",
+        "hippo/best-practices"
+      ]
+    },
+    {
+      "group": "Lexa - Document Parsing",
       "pages": [
         "api/client",
         "api/methods",
         "api/error-handling",
         "api/configuration"
+      ]
+    },
+    {
+      "group": "Account Management",
+      "pages": [
+        "account/overview",
+        "account/authentication",
+        "account/usage-tracking"
       ]
     },
     {

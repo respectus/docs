@@ -1,0 +1,549 @@
+---
+title: "Usage Tracking"
+description: "Monitor API usage, costs, and billing information"
+---
+
+# Usage Tracking
+
+Monitor your API usage, track costs, and manage billing with the Account API.
+
+## Overview
+
+Track three key metrics:
+
+<CardGroup cols={3}>
+  <Card title="API Usage" icon="chart-line">
+    Total API calls, documents processed, questions asked
+  </Card>
+  <Card title="Resource Usage" icon="database">
+    Storage used, rate limits, quotas
+  </Card>
+  <Card title="Billing & Costs" icon="dollar-sign">
+    Current period costs, next invoice, breakdown
+  </Card>
+</CardGroup>
+
+## Get Usage Statistics
+
+<CodeGroup>
+```python Sync
+from cerevox import Account
+
+account = Account(api_key="your-api-key")
+
+# Get current usage
+usage = account.get_usage()
+
+print(f"API Calls: {usage.total_requests}")
+print(f"Documents Processed: {usage.documents_processed}")
+print(f"Questions Asked: {usage.questions_asked}")
+print(f"Storage Used: {usage.storage_bytes / (1024**3):.2f} GB")
+print(f"Rate Limit: {usage.rate_limit}")
+```
+
+```python Async
+from cerevox import AsyncAccount
+
+async with AsyncAccount(api_key="your-api-key") as account:
+    usage = await account.get_usage()
+
+    print(f"Total Requests: {usage.total_requests}")
+    print(f"Remaining: {usage.rate_limit - usage.total_requests}")
+```
+</CodeGroup>
+
+**Response fields:**
+- `total_requests`: Total API calls in current period
+- `documents_processed`: Total documents processed
+- `questions_asked`: Total questions submitted to Hippo
+- `storage_bytes`: Total storage used in bytes
+- `rate_limit`: Maximum requests allowed per period
+- `rate_limit_reset`: When rate limit resets (timestamp)
+
+## Usage by Date Range
+
+```python
+from datetime import datetime, timedelta
+
+# Get usage for specific date range
+start_date = datetime(2025, 1, 1)
+end_date = datetime(2025, 1, 31)
+
+usage = account.get_usage(
+    start_date=start_date.isoformat(),
+    end_date=end_date.isoformat()
+)
+
+print(f"January 2025 Usage:")
+print(f"  API Calls: {usage.total_requests}")
+print(f"  Documents: {usage.documents_processed}")
+print(f"  Questions: {usage.questions_asked}")
+```
+
+## Billing Information
+
+<CodeGroup>
+```python Get Billing Info
+# Get current billing period information
+billing = account.get_billing_info()
+
+print(f"Billing Period: {billing.period_start} to {billing.period_end}")
+print(f"Total Cost: ${billing.total_cost:.2f}")
+print(f"Currency: {billing.currency}")
+
+# Cost breakdown
+print("\nCost Breakdown:")
+print(f"  Hippo: ${billing.breakdown.hippo_cost:.2f}")
+print(f"  Lexa: ${billing.breakdown.lexa_cost:.2f}")
+print(f"  Storage: ${billing.breakdown.storage_cost:.2f}")
+
+print(f"\nNext Invoice: {billing.next_invoice_date}")
+```
+
+```python Async
+billing = await account.get_billing_info()
+
+print(f"Total: ${billing.total_cost}")
+print(f"Next Invoice: {billing.next_invoice_date}")
+```
+</CodeGroup>
+
+**Response fields:**
+- `period_start`: Billing period start date
+- `period_end`: Billing period end date
+- `total_cost`: Total cost for period
+- `currency`: Currency code (USD, EUR, etc.)
+- `breakdown`: Cost breakdown by service
+- `next_invoice_date`: When next invoice is generated
+
+## Monitor Rate Limits
+
+```python
+# Check rate limit status
+usage = account.get_usage()
+
+# Calculate usage percentage
+usage_percent = (usage.total_requests / usage.rate_limit) * 100
+
+print(f"Rate Limit Status:")
+print(f"  Used: {usage.total_requests:,} / {usage.rate_limit:,}")
+print(f"  Percentage: {usage_percent:.1f}%")
+print(f"  Resets: {usage.rate_limit_reset}")
+
+# Alert if approaching limit
+if usage_percent > 80:
+    print("\n⚠️ WARNING: Approaching rate limit!")
+    print("Consider upgrading plan or optimizing usage")
+elif usage_percent > 90:
+    print("\n🚨 CRITICAL: Nearly at rate limit!")
+    print("Immediate action required")
+```
+
+## Usage Monitoring Dashboard
+
+```python
+from cerevox import Account
+from datetime import datetime, timedelta
+import pandas as pd
+
+class UsageMonitor:
+    def __init__(self, api_key):
+        self.account = Account(api_key=api_key)
+
+    def get_daily_summary(self):
+        """Get usage summary for today"""
+        usage = self.account.get_usage()
+
+        return {
+            'api_calls': usage.total_requests,
+            'documents': usage.documents_processed,
+            'questions': usage.questions_asked,
+            'storage_gb': usage.storage_bytes / (1024**3),
+            'rate_limit_used_pct': (usage.total_requests / usage.rate_limit) * 100
+        }
+
+    def get_weekly_trend(self):
+        """Get usage trend for past 7 days"""
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+
+        usage_data = []
+
+        for i in range(7):
+            day = start_date + timedelta(days=i)
+
+            usage = self.account.get_usage(
+                start_date=day.isoformat(),
+                end_date=day.isoformat()
+            )
+
+            usage_data.append({
+                'date': day.strftime('%Y-%m-%d'),
+                'api_calls': usage.total_requests,
+                'cost': usage.estimated_cost
+            })
+
+        return pd.DataFrame(usage_data)
+
+    def check_alerts(self):
+        """Check for usage alerts"""
+        usage = self.account.get_usage()
+        billing = self.account.get_billing_info()
+
+        alerts = []
+
+        # Rate limit check
+        rate_limit_pct = (usage.total_requests / usage.rate_limit) * 100
+        if rate_limit_pct > 80:
+            alerts.append({
+                'type': 'rate_limit',
+                'severity': 'warning' if rate_limit_pct < 90 else 'critical',
+                'message': f'Rate limit at {rate_limit_pct:.0f}%'
+            })
+
+        # Cost check (example threshold: $100)
+        if billing.total_cost > 100:
+            alerts.append({
+                'type': 'cost',
+                'severity': 'warning',
+                'message': f'Monthly cost: ${billing.total_cost:.2f}'
+            })
+
+        return alerts
+
+# Usage
+monitor = UsageMonitor(api_key="your-api-key")
+
+# Daily summary
+summary = monitor.get_daily_summary()
+print("Today's Usage:")
+print(f"  API Calls: {summary['api_calls']:,}")
+print(f"  Documents: {summary['documents']:,}")
+print(f"  Questions: {summary['questions']:,}")
+
+# Weekly trend
+trend = monitor.get_weekly_trend()
+print("\nWeekly Trend:")
+print(trend)
+
+# Alerts
+alerts = monitor.check_alerts()
+if alerts:
+    print("\n🚨 Alerts:")
+    for alert in alerts:
+        print(f"  [{alert['severity'].upper()}] {alert['message']}")
+```
+
+## Cost Analysis
+
+### Understand Cost Breakdown
+
+```python
+billing = account.get_billing_info()
+
+# Total cost
+total = billing.total_cost
+
+# Service breakdown
+hippo_pct = (billing.breakdown.hippo_cost / total) * 100
+lexa_pct = (billing.breakdown.lexa_cost / total) * 100
+storage_pct = (billing.breakdown.storage_cost / total) * 100
+
+print("Cost Breakdown:")
+print(f"  Hippo (RAG):   ${billing.breakdown.hippo_cost:8.2f} ({hippo_pct:.1f}%)")
+print(f"  Lexa (Parse):  ${billing.breakdown.lexa_cost:8.2f} ({lexa_pct:.1f}%)")
+print(f"  Storage:       ${billing.breakdown.storage_cost:8.2f} ({storage_pct:.1f}%)")
+print(f"  {'─' * 40}")
+print(f"  Total:         ${total:8.2f}")
+```
+
+### Calculate ROI from 80% Savings
+
+```python
+# Traditional RAG cost (without Hippo)
+questions_asked = usage.questions_asked
+traditional_cost_per_question = 0.05  # $0.05 per query
+traditional_total = questions_asked * traditional_cost_per_question
+
+# Actual cost with Hippo
+actual_hippo_cost = billing.breakdown.hippo_cost
+
+# Savings
+savings = traditional_total - actual_hippo_cost
+savings_percent = (savings / traditional_total) * 100
+
+print("Cost Comparison:")
+print(f"  Traditional RAG:  ${traditional_total:8.2f}")
+print(f"  With Hippo:       ${actual_hippo_cost:8.2f}")
+print(f"  {'─' * 40}")
+print(f"  Savings:          ${savings:8.2f} ({savings_percent:.0f}%)")
+```
+
+## Usage Optimization
+
+<AccordionGroup>
+  <Accordion icon="recycle" title="Reuse Chats">
+    ```python
+    # ❌ Bad - Create new chat for every question
+    for question in questions:
+        chat = hippo.create_chat(folder.id, "Q&A")
+        answer = hippo.submit_ask(chat.id, question)
+        hippo.delete_chat(chat.id)
+
+    # ✅ Good - Reuse chat for related questions
+    chat = hippo.create_chat(folder.id, "Q&A Session")
+    for question in questions:
+        answer = hippo.submit_ask(chat.id, question)
+    ```
+
+    **Impact**: Reduces overhead, maintains context
+  </Accordion>
+
+  <Accordion icon="upload" title="Batch Upload Documents">
+    ```python
+    import asyncio
+    from cerevox import AsyncHippo
+
+    # ✅ Good - Concurrent upload
+    async with AsyncHippo() as hippo:
+        tasks = [hippo.upload_file(folder.id, f) for f in files]
+        await asyncio.gather(*tasks)
+    ```
+
+    **Impact**: Faster, more efficient processing
+  </Accordion>
+
+  <Accordion icon="broom" title="Clean Up Unused Resources">
+    ```python
+    # Delete old/unused folders
+    folders = hippo.get_folders()
+
+    for folder in folders:
+        if folder.file_count == 0:
+            hippo.delete_folder(folder.id)
+    ```
+
+    **Impact**: Reduces storage costs
+  </Accordion>
+
+  <Accordion icon="target" title="Use Specific Questions">
+    ```python
+    # ❌ Bad - Vague question
+    answer = hippo.submit_ask(chat.id, "Tell me about features")
+
+    # ✅ Good - Specific question
+    answer = hippo.submit_ask(
+        chat.id,
+        "What are the three main features of Product X?"
+    )
+    ```
+
+    **Impact**: Better answers with less retrieval overhead
+  </Accordion>
+</AccordionGroup>
+
+## Set Up Usage Alerts
+
+```python
+import schedule
+import time
+from cerevox import Account
+
+account = Account()
+
+def check_usage_alerts():
+    """Check usage and send alerts"""
+    usage = account.get_usage()
+
+    # Rate limit alert
+    usage_pct = (usage.total_requests / usage.rate_limit) * 100
+
+    if usage_pct > 80:
+        send_alert(
+            title="Rate Limit Warning",
+            message=f"Usage at {usage_pct:.0f}% of rate limit",
+            severity="warning"
+        )
+
+    # Cost alert
+    billing = account.get_billing_info()
+
+    if billing.total_cost > 100:  # Threshold: $100
+        send_alert(
+            title="Cost Alert",
+            message=f"Monthly cost: ${billing.total_cost:.2f}",
+            severity="info"
+        )
+
+def send_alert(title, message, severity):
+    """Send alert via email, Slack, etc."""
+    print(f"[{severity.upper()}] {title}: {message}")
+    # Implement your notification logic here
+    # - Send email
+    # - Post to Slack
+    # - Log to monitoring system
+
+# Schedule daily checks
+schedule.every().day.at("09:00").do(check_usage_alerts)
+
+# Run scheduler
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+```
+
+## Export Usage Data
+
+```python
+import csv
+from datetime import datetime, timedelta
+
+def export_usage_report(account, days=30):
+    """Export usage data to CSV"""
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)
+
+    # Collect daily usage
+    usage_data = []
+
+    current_date = start_date
+    while current_date <= end_date:
+        usage = account.get_usage(
+            start_date=current_date.isoformat(),
+            end_date=current_date.isoformat()
+        )
+
+        usage_data.append({
+            'date': current_date.strftime('%Y-%m-%d'),
+            'api_calls': usage.total_requests,
+            'documents': usage.documents_processed,
+            'questions': usage.questions_asked,
+            'cost': usage.estimated_cost
+        })
+
+        current_date += timedelta(days=1)
+
+    # Write to CSV
+    with open('usage_report.csv', 'w', newline='') as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=['date', 'api_calls', 'documents', 'questions', 'cost']
+        )
+        writer.writeheader()
+        writer.writerows(usage_data)
+
+    print(f"✅ Exported {len(usage_data)} days to usage_report.csv")
+
+# Usage
+export_usage_report(account, days=30)
+```
+
+## Plan Limits
+
+<Tabs>
+  <Tab title="Free Plan">
+    **Rate Limits:**
+    - 1,000 API calls/month
+    - 100 documents/month
+    - 500 questions/month
+
+    **Storage:**
+    - 1 GB included
+
+    **Features:**
+    - Hippo, Lexa, Account APIs
+    - 1 user
+  </Tab>
+
+  <Tab title="Pro Plan">
+    **Rate Limits:**
+    - 100,000 API calls/month
+    - 10,000 documents/month
+    - 50,000 questions/month
+
+    **Storage:**
+    - 100 GB included
+
+    **Features:**
+    - All Free features
+    - Up to 10 users
+    - Priority support
+  </Tab>
+
+  <Tab title="Enterprise">
+    **Rate Limits:**
+    - Custom limits
+
+    **Storage:**
+    - Unlimited
+
+    **Features:**
+    - All Pro features
+    - Unlimited users
+    - SLA guarantee
+    - Dedicated support
+    - Custom integrations
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="bell" title="Set Up Monitoring">
+    Monitor usage daily to catch issues early:
+    - Track rate limit usage
+    - Monitor costs
+    - Review usage trends
+    - Set up automated alerts
+  </Accordion>
+
+  <Accordion icon="chart-line" title="Analyze Trends">
+    Look for patterns in your usage:
+    - Peak usage times
+    - Cost trends over time
+    - Most expensive operations
+    - Optimization opportunities
+  </Accordion>
+
+  <Accordion icon="gauge" title="Optimize Usage">
+    Reduce costs without sacrificing quality:
+    - Use async for batch operations
+    - Reuse chats and folders
+    - Clean up unused resources
+    - Write specific questions
+  </Accordion>
+
+  <Accordion icon="dollar-sign" title="Plan Ahead">
+    Forecast usage and costs:
+    - Estimate monthly costs
+    - Plan for growth
+    - Upgrade plan proactively
+    - Budget for peak periods
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/account/authentication"
+  >
+    Manage authentication and tokens
+  </Card>
+  <Card
+    title="Account Overview"
+    icon="user"
+    href="/account/overview"
+  >
+    Back to Account API overview
+  </Card>
+  <Card
+    title="Hippo Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize RAG costs and quality
+  </Card>
+</CardGroup>

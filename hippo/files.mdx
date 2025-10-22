@@ -1,0 +1,365 @@
+---
+title: "File Operations"
+description: "Upload and manage documents in Hippo folders"
+---
+
+# File Operations
+
+Upload and manage documents that power your RAG Q&A system.
+
+## Upload Files
+
+### Upload from Local File
+
+<CodeGroup>
+```python Sync
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# Upload a local file
+file = hippo.upload_file(
+    folder_id="folder_123",
+    file_path="documents/user-guide.pdf"
+)
+
+print(f"Uploaded: {file.name}")
+print(f"File ID: {file.id}")
+print(f"Status: {file.status}")
+```
+
+```python Async
+from cerevox import AsyncHippo
+
+async with AsyncHippo(api_key="your-api-key") as hippo:
+    file = await hippo.upload_file(
+        folder_id="folder_123",
+        file_path="documents/user-guide.pdf"
+    )
+    print(f"Uploaded: {file.name}")
+```
+</CodeGroup>
+
+### Upload from URL
+
+<CodeGroup>
+```python Sync
+# Upload directly from a URL
+file = hippo.upload_file_from_url(
+    folder_id="folder_123",
+    file_url="https://example.com/whitepaper.pdf",
+    file_name="whitepaper.pdf"  # Optional custom name
+)
+
+print(f"Uploaded from URL: {file.name}")
+```
+
+```python Async
+file = await hippo.upload_file_from_url(
+    folder_id="folder_123",
+    file_url="https://example.com/document.pdf",
+    file_name="document.pdf"
+)
+```
+</CodeGroup>
+
+### Batch Upload
+
+<CodeGroup>
+```python Sync - Sequential
+files = []
+
+for file_path in ["doc1.pdf", "doc2.docx", "doc3.pptx"]:
+    file = hippo.upload_file(folder_id, file_path)
+    files.append(file)
+    print(f"Uploaded: {file.name}")
+```
+
+```python Async - Concurrent
+import asyncio
+
+async with AsyncHippo() as hippo:
+    # Upload multiple files concurrently
+    upload_tasks = [
+        hippo.upload_file(folder_id, "doc1.pdf"),
+        hippo.upload_file(folder_id, "doc2.docx"),
+        hippo.upload_file(folder_id, "doc3.pptx")
+    ]
+
+    files = await asyncio.gather(*upload_tasks)
+    print(f"Uploaded {len(files)} files concurrently")
+```
+</CodeGroup>
+
+## Supported File Formats
+
+<CardGroup cols={3}>
+  <Card title="Documents" icon="file-pdf">
+    - PDF (.pdf)
+    - Word (.docx, .doc)
+    - PowerPoint (.pptx, .ppt)
+    - Text (.txt)
+    - RTF (.rtf)
+  </Card>
+
+  <Card title="Spreadsheets" icon="table">
+    - Excel (.xlsx, .xls)
+    - CSV (.csv)
+    - TSV (.tsv)
+  </Card>
+
+  <Card title="Web & Other" icon="globe">
+    - HTML (.html)
+    - MHTML (.mhtml)
+    - Markdown (.md)
+  </Card>
+</CardGroup>
+
+**File size limits:**
+- Max file size: 100MB per file
+- Contact support for larger files or custom formats
+
+## List Files
+
+<CodeGroup>
+```python Sync
+# Get all files in a folder
+files = hippo.get_files(folder_id="folder_123")
+
+for file in files:
+    print(f"{file.name} - {file.status} - {file.size_bytes} bytes")
+```
+
+```python Async
+files = await hippo.get_files(folder_id="folder_123")
+
+for file in files:
+    print(f"{file.name}: {file.status}")
+```
+</CodeGroup>
+
+**File status values:**
+- `uploading`: File is being uploaded
+- `processing`: File is being indexed
+- `completed`: File is ready for Q&A
+- `failed`: Processing failed
+
+## Get File Details
+
+<CodeGroup>
+```python Sync
+# Get specific file information
+file = hippo.get_file(file_id="file_456")
+
+print(f"Name: {file.name}")
+print(f"Status: {file.status}")
+print(f"Size: {file.size_bytes} bytes")
+print(f"Pages: {file.page_count}")
+print(f"Uploaded: {file.created_at}")
+```
+
+```python Async
+file = await hippo.get_file(file_id="file_456")
+```
+</CodeGroup>
+
+## Delete Files
+
+<CodeGroup>
+```python Sync
+# Delete a file
+hippo.delete_file(file_id="file_456")
+
+print("File deleted successfully")
+```
+
+```python Async
+await hippo.delete_file(file_id="file_456")
+```
+</CodeGroup>
+
+<Warning>
+  Deleted files cannot be recovered. The file will be removed from all chats and answers that referenced it.
+</Warning>
+
+## File Processing
+
+### Processing Time
+
+Files are automatically processed after upload:
+
+<Steps>
+  <Step title="Upload">
+    File is uploaded to Cerevox (a few seconds)
+  </Step>
+  <Step title="Parsing">
+    Document is parsed for text and structure (10s - 2min)
+  </Step>
+  <Step title="Chunking">
+    Content is split into semantic chunks (a few seconds)
+  </Step>
+  <Step title="Indexing">
+    Chunks are indexed for search (10s - 1min)
+  </Step>
+  <Step title="Ready">
+    File is ready for Q&A!
+  </Step>
+</Steps>
+
+**Total processing time:**
+- Small files (< 10 pages): 10-30 seconds
+- Medium files (10-100 pages): 30-120 seconds
+- Large files (> 100 pages): 2-5 minutes
+
+### Monitor Processing Status
+
+```python
+import time
+
+# Upload file
+file = hippo.upload_file(folder_id, "large-document.pdf")
+
+# Poll until processing completes
+while file.status != "completed":
+    time.sleep(5)
+    file = hippo.get_file(file.id)
+    print(f"Status: {file.status}")
+
+print("File ready for Q&A!")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="file-check" title="Verify File Quality">
+    **Before uploading:**
+    - Ensure PDFs are text-based (not scanned images)
+    - Check that documents aren't password-protected
+    - Verify file isn't corrupted
+
+    **Tip**: OCR (scanned) PDFs work but may have lower accuracy. Use text-based PDFs when possible.
+  </Accordion>
+
+  <Accordion icon="scissors" title="Optimize File Size">
+    **Reduce processing time:**
+    - Remove unnecessary pages (covers, blanks, ads)
+    - Compress images in PDFs
+    - Split very large documents (500+ pages)
+
+    Smaller, focused documents = faster processing + better search results
+  </Accordion>
+
+  <Accordion icon="layer-group" title="Upload Related Documents Together">
+    ```python
+    # Good: Upload product docs together
+    folder = hippo.create_folder("Product V2 Docs")
+
+    docs = ["overview.pdf", "features.pdf", "api.pdf"]
+    for doc in docs:
+        hippo.upload_file(folder.id, doc)
+    ```
+
+    Related documents in the same folder enable better cross-document Q&A.
+  </Accordion>
+
+  <Accordion icon="tag" title="Use Descriptive Filenames">
+    **Good**: `product-api-authentication-guide.pdf`
+    **Bad**: `doc1.pdf`, `untitled.pdf`
+
+    Descriptive names help with source citations and debugging.
+  </Accordion>
+
+  <Accordion icon="clock" title="Use Async for Batch Uploads">
+    ```python
+    # Async = 10x faster for multiple files
+    async with AsyncHippo() as hippo:
+        tasks = [hippo.upload_file(folder_id, f) for f in files]
+        results = await asyncio.gather(*tasks)
+    ```
+
+    Async concurrent uploads are significantly faster than sequential.
+  </Accordion>
+</AccordionGroup>
+
+## Complete Example: Batch Upload
+
+```python
+import asyncio
+from pathlib import Path
+from cerevox import AsyncHippo
+
+async def batch_upload_directory(folder_id, directory_path):
+    """Upload all PDFs from a directory"""
+    async with AsyncHippo(api_key="your-api-key") as hippo:
+        # Get all PDF files
+        pdf_files = list(Path(directory_path).glob("*.pdf"))
+
+        print(f"Found {len(pdf_files)} PDF files")
+
+        # Upload concurrently
+        tasks = [
+            hippo.upload_file(folder_id, str(pdf))
+            for pdf in pdf_files
+        ]
+
+        files = await asyncio.gather(*tasks)
+
+        # Report results
+        print(f"\n✅ Uploaded {len(files)} files:")
+        for file in files:
+            print(f"  - {file.name} ({file.status})")
+
+        return files
+
+# Usage
+folder = await hippo.create_folder("Uploaded Docs")
+files = await batch_upload_directory(folder.id, "./documents")
+```
+
+## Error Handling
+
+```python
+from cerevox import Hippo, HippoError
+
+hippo = Hippo()
+
+try:
+    file = hippo.upload_file(folder_id, "document.pdf")
+    print(f"Uploaded: {file.name}")
+
+except FileNotFoundError:
+    print("Error: File not found")
+except HippoError as e:
+    if "unsupported format" in str(e).lower():
+        print("Error: File format not supported")
+    elif "too large" in str(e).lower():
+        print("Error: File exceeds size limit")
+    else:
+        print(f"Error: {e}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Chat Sessions"
+    icon="comments"
+    href="/hippo/chat"
+  >
+    Create chats to ask questions
+  </Card>
+  <Card
+    title="Q&A System"
+    icon="message-question"
+    href="/hippo/questions"
+  >
+    Ask questions over uploaded files
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize file preparation
+  </Card>
+</CardGroup>

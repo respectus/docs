@@ -1,0 +1,349 @@
+---
+title: "Hippo Quickstart"
+description: "Build your first RAG Q&A system in 5 minutes"
+---
+
+# Hippo Quickstart - 5 Minutes to Q&A 🦛
+
+Build an AI Q&A system that answers questions from your documents with source citations.
+
+## Prerequisites
+
+<Check>
+  **Before you start:**
+  - Python 3.9+ installed
+  - Cerevox API key ([get one here](https://cerevox.ai))
+  - `pip install cerevox` completed
+</Check>
+
+## The 4-Step Workflow
+
+Hippo follows a simple pattern:
+
+```mermaid
+graph LR
+    A[Create Folder] --> B[Upload Files]
+    B --> C[Create Chat]
+    C --> D[Ask Questions]
+    style D fill:#0285c7
+```
+
+## Step-by-Step Implementation
+
+<Steps>
+  <Step title="Create a Folder">
+    Folders organize documents into searchable knowledge bases.
+
+    ```python
+    from cerevox import Hippo
+
+    hippo = Hippo(api_key="your-api-key")
+
+    # Create a folder for your documents
+    folder = hippo.create_folder(
+        name="Product Documentation",
+        description="User guides and API docs"
+    )
+
+    print(f"Created folder: {folder.name}")
+    print(f"Folder ID: {folder.id}")
+    ```
+
+    <Note>
+      **Tip**: Use descriptive folder names - they help with organization when you have multiple knowledge bases.
+    </Note>
+  </Step>
+
+  <Step title="Upload Files">
+    Add documents to your folder from files or URLs.
+
+    ```python
+    # Upload from local file
+    file1 = hippo.upload_file(
+        folder_id=folder.id,
+        file_path="user-guide.pdf"
+    )
+
+    # Upload from URL
+    file2 = hippo.upload_file_from_url(
+        folder_id=folder.id,
+        file_url="https://example.com/api-docs.pdf",
+        file_name="api-docs.pdf"
+    )
+
+    print(f"Uploaded: {file1.name}")
+    print(f"Uploaded: {file2.name}")
+    ```
+
+    **Supported formats**: PDF, DOCX, PPTX, XLSX, TXT, HTML, CSV, and more
+
+    <Warning>
+      Large files (100+ pages) may take 2-5 minutes to process. Use async API for better performance.
+    </Warning>
+  </Step>
+
+  <Step title="Create a Chat Session">
+    Chat sessions maintain conversation context for Q&A.
+
+    ```python
+    # Create chat linked to the folder
+    chat = hippo.create_chat(
+        folder_id=folder.id,
+        chat_name="Technical Support Q&A"
+    )
+
+    print(f"Created chat: {chat.name}")
+    print(f"Chat ID: {chat.id}")
+    ```
+
+    <Note>
+      **Multiple chats per folder**: You can create different chats for different purposes (e.g., "Customer Support", "Internal Q&A").
+    </Note>
+  </Step>
+
+  <Step title="Ask Questions">
+    Submit questions and get AI-powered answers with citations!
+
+    ```python
+    # Ask a question
+    answer = hippo.submit_ask(
+        chat_id=chat.id,
+        question="How do I authenticate users in the API?"
+    )
+
+    # Print the answer
+    print(f"Question: {answer.question}")
+    print(f"Answer: {answer.response}")
+    print(f"Confidence: {answer.confidence_score}")
+
+    # Show source citations
+    print(f"\nSources ({len(answer.sources)} citations):")
+    for source in answer.sources:
+        print(f"  - {source.file_name} (Page {source.page_number})")
+    ```
+
+    <Check>
+      **You're done!** You've built a RAG Q&A system with 80% cost savings! 🎉
+    </Check>
+  </Step>
+</Steps>
+
+## Complete Code Example
+
+<CodeGroup>
+```python Full Workflow
+from cerevox import Hippo
+
+# Initialize Hippo
+hippo = Hippo(api_key="your-api-key")
+
+# 1. Create folder
+folder = hippo.create_folder(
+    name="Product Documentation",
+    description="User guides and API docs"
+)
+
+# 2. Upload files
+file1 = hippo.upload_file(folder.id, "user-guide.pdf")
+file2 = hippo.upload_file_from_url(
+    folder.id,
+    "https://example.com/api-docs.pdf",
+    "api-docs.pdf"
+)
+
+# 3. Create chat
+chat = hippo.create_chat(folder.id, "Technical Support")
+
+# 4. Ask questions
+questions = [
+    "How do I authenticate?",
+    "What are the API rate limits?",
+    "How do I handle errors?"
+]
+
+for question in questions:
+    answer = hippo.submit_ask(chat.id, question)
+    print(f"\nQ: {question}")
+    print(f"A: {answer.response}")
+    print(f"Sources: {len(answer.sources)} citations")
+```
+
+```python Async Version
+import asyncio
+from cerevox import AsyncHippo
+
+async def main():
+    async with AsyncHippo(api_key="your-api-key") as hippo:
+        # 1. Create folder
+        folder = await hippo.create_folder("Product Docs")
+
+        # 2. Upload files concurrently
+        files = await asyncio.gather(
+            hippo.upload_file(folder.id, "guide.pdf"),
+            hippo.upload_file(folder.id, "docs.pdf")
+        )
+
+        # 3. Create chat
+        chat = await hippo.create_chat(folder.id, "Support")
+
+        # 4. Ask questions
+        answer = await hippo.submit_ask(
+            chat.id,
+            "How do I get started?"
+        )
+
+        print(f"Answer: {answer.response}")
+        print(f"Sources: {len(answer.sources)}")
+
+# Run async workflow
+asyncio.run(main())
+```
+</CodeGroup>
+
+## What You Get Back
+
+When you submit a question, Hippo returns:
+
+<ResponseField name="response" type="string">
+  The AI-generated answer to your question
+</ResponseField>
+
+<ResponseField name="question" type="string">
+  The original question (as processed)
+</ResponseField>
+
+<ResponseField name="confidence_score" type="float">
+  Confidence score (0-1) indicating answer quality
+</ResponseField>
+
+<ResponseField name="sources" type="array">
+  List of source documents with citations
+  - `file_name`: Name of the source document
+  - `file_id`: Unique file identifier
+  - `page_number`: Page where information was found
+  - `relevance_score`: How relevant this source is
+</ResponseField>
+
+## Testing Your Setup
+
+Run this verification script:
+
+```python
+from cerevox import Hippo
+
+def test_hippo():
+    hippo = Hippo(api_key="your-api-key")
+
+    # Quick test
+    folder = hippo.create_folder("Test Folder")
+
+    # Upload test content
+    test_file = hippo.upload_file(folder.id, "test.pdf")
+
+    # Create chat and ask
+    chat = hippo.create_chat(folder.id, "Test Chat")
+    answer = hippo.submit_ask(chat.id, "What is this document about?")
+
+    # Verify
+    if answer and answer.response:
+        print("✅ Hippo is working correctly!")
+        print(f"Answer: {answer.response}")
+        return True
+    else:
+        print("❌ Something went wrong")
+        return False
+
+# Run test
+test_hippo()
+```
+
+## Common First Questions
+
+<AccordionGroup>
+  <Accordion icon="clock" title="How long does file processing take?">
+    - **Small files** (< 10 pages): 10-30 seconds
+    - **Medium files** (10-100 pages): 30-120 seconds
+    - **Large files** (> 100 pages): 2-5 minutes
+
+    Files are processed automatically in the background. You can ask questions as soon as upload completes - the system will wait for indexing to finish.
+  </Accordion>
+
+  <Accordion icon="dollar-sign" title="How much does it cost?">
+    Hippo pricing is based on:
+    - Number of documents uploaded
+    - Number of questions asked
+    - Processing complexity
+
+    **80% cheaper** than traditional RAG with full document retrieval!
+
+    Check [pricing](https://cerevox.ai/pricing) for current rates.
+  </Accordion>
+
+  <Accordion icon="file-question" title="What file formats are supported?">
+    Supported formats:
+    - **Documents**: PDF, DOCX, PPTX, TXT, RTF
+    - **Spreadsheets**: XLSX, CSV
+    - **Web**: HTML, MHTML
+    - **Others**: Contact support for custom formats
+
+    Max file size: 100MB per file (contact for larger files)
+  </Accordion>
+
+  <Accordion icon="language" title="What languages are supported?">
+    Hippo supports **100+ languages** for both documents and questions, including:
+    - English, Spanish, French, German, Italian
+    - Chinese (Simplified & Traditional), Japanese, Korean
+    - Arabic, Hebrew, Hindi, and more
+
+    Same accuracy across all languages!
+  </Accordion>
+
+  <Accordion icon="shield" title="Is my data secure?">
+    Yes! Cerevox is enterprise-ready:
+    - **Data encryption** at rest and in transit
+    - **SOC 2 compliance** (in progress)
+    - **Privacy controls**: Delete data anytime
+    - **No training**: Your data is never used to train models
+
+    See our [privacy policy](/legal/privacy) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Folder Management"
+    icon="folder-tree"
+    href="/hippo/folders"
+  >
+    Learn to organize documents effectively
+  </Card>
+  <Card
+    title="File Operations"
+    icon="file-upload"
+    href="/hippo/files"
+  >
+    Advanced file upload and management
+  </Card>
+  <Card
+    title="Chat Sessions"
+    icon="comments"
+    href="/hippo/chat"
+  >
+    Manage conversations and context
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize answer quality and costs
+  </Card>
+</CardGroup>
+
+---
+
+<Tip>
+  **Need help?** Join our [Discord community](https://discord.gg/cerevox) or check out [complete examples](/examples/rag-workflow).
+</Tip>

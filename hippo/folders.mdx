@@ -1,0 +1,310 @@
+---
+title: "Folder Management"
+description: "Organize documents into searchable knowledge bases"
+---
+
+# Folder Management
+
+Folders are the foundation of Hippo's RAG system - they organize your documents into isolated, searchable knowledge bases.
+
+## What are Folders?
+
+Think of folders as **knowledge base containers**:
+- Each folder holds a collection of related documents
+- Documents are automatically indexed for semantic search
+- Chats are linked to folders to access their documents
+- Folders provide logical separation of knowledge domains
+
+<Note>
+  **Best practice**: Create separate folders for different knowledge domains (e.g., "Product Docs", "HR Policies", "Customer Support")
+</Note>
+
+## Core Operations
+
+### Create a Folder
+
+<CodeGroup>
+```python Sync
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# Create folder with name and description
+folder = hippo.create_folder(
+    name="Product Documentation",
+    description="User guides, API docs, and tutorials"
+)
+
+print(f"Created: {folder.name}")
+print(f"ID: {folder.id}")
+```
+
+```python Async
+from cerevox import AsyncHippo
+
+async with AsyncHippo(api_key="your-api-key") as hippo:
+    folder = await hippo.create_folder(
+        name="Product Documentation",
+        description="User guides and API docs"
+    )
+    print(f"Created: {folder.name}")
+```
+</CodeGroup>
+
+**Response fields:**
+- `id`: Unique folder identifier
+- `name`: Folder name
+- `description`: Folder description
+- `created_at`: Creation timestamp
+- `file_count`: Number of files in folder
+
+### List All Folders
+
+<CodeGroup>
+```python Sync
+# Get all your folders
+folders = hippo.get_folders()
+
+for folder in folders:
+    print(f"{folder.name}: {folder.file_count} files")
+```
+
+```python Async
+folders = await hippo.get_folders()
+
+for folder in folders:
+    print(f"{folder.name}: {folder.file_count} files")
+```
+</CodeGroup>
+
+### Get Folder Details
+
+<CodeGroup>
+```python Sync
+# Get specific folder by ID
+folder = hippo.get_folder(folder_id="folder_123")
+
+print(f"Name: {folder.name}")
+print(f"Files: {folder.file_count}")
+print(f"Created: {folder.created_at}")
+```
+
+```python Async
+folder = await hippo.get_folder(folder_id="folder_123")
+```
+</CodeGroup>
+
+### Update Folder
+
+<CodeGroup>
+```python Sync
+# Update folder name or description
+updated_folder = hippo.update_folder(
+    folder_id=folder.id,
+    name="Updated Product Docs",
+    description="Complete product documentation library"
+)
+
+print(f"Updated: {updated_folder.name}")
+```
+
+```python Async
+updated = await hippo.update_folder(
+    folder_id=folder.id,
+    name="Updated Name"
+)
+```
+</CodeGroup>
+
+### Delete Folder
+
+<Warning>
+  **Deleting a folder is permanent** and removes all files, chats, and Q&A history within it!
+</Warning>
+
+<CodeGroup>
+```python Sync
+# Delete folder and all its contents
+hippo.delete_folder(folder_id=folder.id)
+
+print("Folder deleted successfully")
+```
+
+```python Async
+await hippo.delete_folder(folder_id=folder.id)
+```
+</CodeGroup>
+
+## Folder Organization Strategies
+
+<AccordionGroup>
+  <Accordion icon="building" title="By Department">
+    Create folders for each department or team:
+    - "Engineering Docs"
+    - "Sales Playbooks"
+    - "HR Policies"
+    - "Customer Support"
+
+    **Benefit**: Easy access control and logical separation
+  </Accordion>
+
+  <Accordion icon="box-archive" title="By Product or Service">
+    Organize by product lines:
+    - "Product A Documentation"
+    - "Product B User Guides"
+    - "Service X Training Materials"
+
+    **Benefit**: Clear product-specific knowledge bases
+  </Accordion>
+
+  <Accordion icon="calendar" title="By Time Period">
+    Useful for financial or periodic documents:
+    - "Q1 2025 Reports"
+    - "2024 Annual Filings"
+    - "Monthly Updates - March 2025"
+
+    **Benefit**: Easy to archive and reference historical data
+  </Accordion>
+
+  <Accordion icon="user-group" title="By Customer or Project">
+    For client-specific or project-based work:
+    - "Client: Acme Corp"
+    - "Project: Website Redesign"
+    - "Customer: TechStartup Inc"
+
+    **Benefit**: Isolated knowledge per client/project
+  </Accordion>
+</AccordionGroup>
+
+## Folder Limits & Quotas
+
+<CardGroup cols={2}>
+  <Card title="Files per Folder" icon="file">
+    **Free tier**: Up to 100 files
+    **Pro tier**: Up to 10,000 files
+    **Enterprise**: Unlimited
+
+    Contact sales for custom limits
+  </Card>
+
+  <Card title="Folder Count" icon="folder">
+    **Free tier**: Up to 10 folders
+    **Pro tier**: Up to 100 folders
+    **Enterprise**: Unlimited
+
+    See [pricing](https://cerevox.ai/pricing)
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="tag" title="Use Descriptive Names">
+    **Good**: "Product API Documentation v2.0"
+    **Bad**: "Docs", "Folder1", "Misc"
+
+    Descriptive names make it easier to manage multiple folders and understand their purpose at a glance.
+  </Accordion>
+
+  <Accordion icon="note" title="Add Clear Descriptions">
+    ```python
+    folder = hippo.create_folder(
+        name="Customer Support KB",
+        description="FAQs, troubleshooting guides, and product manuals for support team"
+    )
+    ```
+
+    Descriptions help team members understand folder contents without exploring files.
+  </Accordion>
+
+  <Accordion icon="broom" title="Regular Cleanup">
+    ```python
+    # Delete old or unused folders
+    folders = hippo.get_folders()
+
+    for folder in folders:
+        if folder.file_count == 0:
+            print(f"Empty folder: {folder.name}")
+            # Optionally delete
+            # hippo.delete_folder(folder.id)
+    ```
+
+    Clean up empty or outdated folders to keep your workspace organized.
+  </Accordion>
+
+  <Accordion icon="layer-group" title="Avoid Over-Fragmentation">
+    **Don't**: Create 50 folders with 2-3 files each
+    **Do**: Create fewer folders with more related documents
+
+    Folders with more documents generally yield better search results.
+  </Accordion>
+
+  <Accordion icon="shield" title="Plan for Growth">
+    Start with broad categories and refine as your knowledge base grows:
+    1. Start: "Product Documentation"
+    2. As it grows → Split into "Product A Docs", "Product B Docs"
+    3. As it grows more → Split by version or feature
+
+    Avoid premature over-organization.
+  </Accordion>
+</AccordionGroup>
+
+## Complete Example: Manage Product Docs
+
+```python
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# 1. Create folders for different product areas
+folders = {}
+
+for area in ["User Guides", "API Reference", "Tutorials", "Release Notes"]:
+    folder = hippo.create_folder(
+        name=f"Product Docs - {area}",
+        description=f"{area} for all products"
+    )
+    folders[area] = folder
+    print(f"Created: {folder.name}")
+
+# 2. Upload files to appropriate folders
+hippo.upload_file(folders["User Guides"].id, "getting-started.pdf")
+hippo.upload_file(folders["API Reference"].id, "api-v2.pdf")
+hippo.upload_file(folders["Tutorials"].id, "tutorial-basics.pdf")
+
+# 3. List all folders and their stats
+all_folders = hippo.get_folders()
+
+print("\nFolder Summary:")
+for folder in all_folders:
+    print(f"  {folder.name}: {folder.file_count} files")
+
+# 4. Clean up if needed
+# hippo.delete_folder(folder_id=folders["Release Notes"].id)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="File Operations"
+    icon="file-upload"
+    href="/hippo/files"
+  >
+    Learn to upload and manage files
+  </Card>
+  <Card
+    title="Chat Sessions"
+    icon="comments"
+    href="/hippo/chat"
+  >
+    Create chats linked to folders
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize folder organization
+  </Card>
+</CardGroup>

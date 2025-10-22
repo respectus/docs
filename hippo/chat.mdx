@@ -1,0 +1,418 @@
+---
+title: "Chat Sessions"
+description: "Create and manage conversation contexts for Q&A"
+---
+
+# Chat Sessions
+
+Chat sessions provide conversation context for asking questions about your documents.
+
+## What are Chat Sessions?
+
+**Chat sessions** are conversation contexts linked to a folder:
+- Each chat is connected to one folder
+- Maintains conversation history for follow-up questions
+- Multiple chats can be created per folder
+- Isolates different conversation topics or users
+
+<Note>
+  Think of chats as **conversation threads** - each one remembers previous questions and answers within that thread.
+</Note>
+
+## Core Operations
+
+### Create a Chat
+
+<CodeGroup>
+```python Sync
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# Create chat linked to a folder
+chat = hippo.create_chat(
+    folder_id="folder_123",
+    chat_name="Technical Support Q&A"
+)
+
+print(f"Created: {chat.name}")
+print(f"Chat ID: {chat.id}")
+```
+
+```python Async
+from cerevox import AsyncHippo
+
+async with AsyncHippo(api_key="your-api-key") as hippo:
+    chat = await hippo.create_chat(
+        folder_id="folder_123",
+        chat_name="Technical Support"
+    )
+    print(f"Chat ID: {chat.id}")
+```
+</CodeGroup>
+
+**Response fields:**
+- `id`: Unique chat identifier
+- `name`: Chat name
+- `folder_id`: Associated folder
+- `created_at`: Creation timestamp
+- `message_count`: Number of Q&A exchanges
+
+### List Chats
+
+<CodeGroup>
+```python Get All Chats in Folder
+# Get all chats for a folder
+chats = hippo.get_chats(folder_id="folder_123")
+
+for chat in chats:
+    print(f"{chat.name}: {chat.message_count} messages")
+```
+
+```python Async
+chats = await hippo.get_chats(folder_id="folder_123")
+
+for chat in chats:
+    print(f"{chat.name} - {chat.message_count} Q&A")
+```
+</CodeGroup>
+
+### Get Chat Details
+
+<CodeGroup>
+```python Sync
+# Get specific chat information
+chat = hippo.get_chat(chat_id="chat_456")
+
+print(f"Name: {chat.name}")
+print(f"Folder: {chat.folder_id}")
+print(f"Messages: {chat.message_count}")
+print(f"Created: {chat.created_at}")
+```
+
+```python Async
+chat = await hippo.get_chat(chat_id="chat_456")
+```
+</CodeGroup>
+
+### Update Chat Name
+
+<CodeGroup>
+```python Sync
+# Rename a chat
+updated_chat = hippo.update_chat(
+    chat_id=chat.id,
+    chat_name="Customer Support - Priority"
+)
+
+print(f"Renamed to: {updated_chat.name}")
+```
+
+```python Async
+updated = await hippo.update_chat(
+    chat_id=chat.id,
+    chat_name="New Name"
+)
+```
+</CodeGroup>
+
+### Delete Chat
+
+<CodeGroup>
+```python Sync
+# Delete chat and its Q&A history
+hippo.delete_chat(chat_id="chat_456")
+
+print("Chat deleted successfully")
+```
+
+```python Async
+await hippo.delete_chat(chat_id="chat_456")
+```
+</CodeGroup>
+
+<Warning>
+  Deleting a chat removes all Q&A history. The folder and files remain intact.
+</Warning>
+
+## Chat Organization Patterns
+
+<AccordionGroup>
+  <Accordion icon="user" title="Per-User Chats">
+    Create individual chats for each user:
+
+    ```python
+    # Create chat for each customer
+    customer_chat = hippo.create_chat(
+        folder_id=support_docs_folder.id,
+        chat_name=f"Support - Customer {customer_id}"
+    )
+    ```
+
+    **Benefit**: Personalized conversation history per user
+  </Accordion>
+
+  <Accordion icon="list" title="Topic-Based Chats">
+    Organize by conversation topic:
+
+    ```python
+    topics = ["Authentication", "Billing", "API Usage", "Troubleshooting"]
+
+    chats = {}
+    for topic in topics:
+        chat = hippo.create_chat(folder.id, f"Support - {topic}")
+        chats[topic] = chat
+    ```
+
+    **Benefit**: Clear separation of conversation topics
+  </Accordion>
+
+  <Accordion icon="clock" title="Session-Based Chats">
+    Create temporary chats for sessions:
+
+    ```python
+    # Create chat for this user session
+    session_chat = hippo.create_chat(
+        folder.id,
+        f"Session {session_id} - {datetime.now()}"
+    )
+
+    # ... ask questions ...
+
+    # Clean up after session ends
+    hippo.delete_chat(session_chat.id)
+    ```
+
+    **Benefit**: Automatic cleanup of temporary conversations
+  </Accordion>
+
+  <Accordion icon="building" title="Department Chats">
+    Chats for different teams accessing same docs:
+
+    ```python
+    departments = ["Sales", "Support", "Engineering"]
+
+    for dept in departments:
+        chat = hippo.create_chat(
+            product_docs_folder.id,
+            f"{dept} Team Chat"
+        )
+    ```
+
+    **Benefit**: Department-specific conversation tracking
+  </Accordion>
+</AccordionGroup>
+
+## Conversation Context
+
+Chat sessions maintain context for follow-up questions:
+
+```python
+# First question
+answer1 = hippo.submit_ask(
+    chat.id,
+    "What is the API rate limit?"
+)
+# Answer: "The API rate limit is 1000 requests per hour..."
+
+# Follow-up question (chat remembers previous context)
+answer2 = hippo.submit_ask(
+    chat.id,
+    "How can I increase it?"  # "it" refers to rate limit from Q1
+)
+# Answer: "To increase your rate limit, contact support..."
+
+# Another follow-up
+answer3 = hippo.submit_ask(
+    chat.id,
+    "What's the process for that?"  # "that" refers to Q2
+)
+# Answer: "The process for increasing rate limits is..."
+```
+
+<Note>
+  **Context window**: Chats remember the last 10 Q&A exchanges for context.
+</Note>
+
+## View Chat History
+
+Get all questions and answers from a chat:
+
+<CodeGroup>
+```python Sync
+# Get full Q&A history
+asks = hippo.get_asks(chat_id=chat.id)
+
+print(f"Chat history ({len(asks)} Q&A):\n")
+
+for i, ask in enumerate(asks, 1):
+    print(f"{i}. Q: {ask.question}")
+    print(f"   A: {ask.response}")
+    print(f"   Sources: {len(ask.sources)}\n")
+```
+
+```python Async
+asks = await hippo.get_asks(chat_id=chat.id)
+
+for ask in asks:
+    print(f"Q: {ask.question}")
+    print(f"A: {ask.response}\n")
+```
+</CodeGroup>
+
+## Complete Example: Multi-User Support System
+
+```python
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# 1. Create knowledge base
+support_folder = hippo.create_folder(
+    "Customer Support Docs",
+    "FAQs, troubleshooting, and product guides"
+)
+
+# 2. Upload support documents
+docs = [
+    "faq.pdf",
+    "troubleshooting-guide.pdf",
+    "product-manual.pdf"
+]
+
+for doc in docs:
+    hippo.upload_file(support_folder.id, doc)
+
+# 3. Create chats for different purposes
+chats = {}
+
+# General support chat
+chats['general'] = hippo.create_chat(
+    support_folder.id,
+    "General Support"
+)
+
+# Technical support chat
+chats['technical'] = hippo.create_chat(
+    support_folder.id,
+    "Technical Support"
+)
+
+# Billing inquiries chat
+chats['billing'] = hippo.create_chat(
+    support_folder.id,
+    "Billing Support"
+)
+
+# 4. Route questions to appropriate chat
+def ask_support(question, category='general'):
+    chat_id = chats[category].id
+
+    answer = hippo.submit_ask(chat_id, question)
+
+    print(f"Category: {category}")
+    print(f"Q: {question}")
+    print(f"A: {answer.response}\n")
+
+# Use the system
+ask_support("How do I reset my password?", "general")
+ask_support("Why is the API returning 500 errors?", "technical")
+ask_support("How do I update my payment method?", "billing")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="tag" title="Use Descriptive Chat Names">
+    **Good**: "Customer Support - Authentication Issues"
+    **Bad**: "Chat 1", "Test", "Untitled"
+
+    Clear names help identify chats when you have many.
+  </Accordion>
+
+  <Accordion icon="broom" title="Clean Up Unused Chats">
+    ```python
+    # Delete old or test chats
+    chats = hippo.get_chats(folder_id)
+
+    for chat in chats:
+        if "test" in chat.name.lower() or chat.message_count == 0:
+            hippo.delete_chat(chat.id)
+            print(f"Deleted: {chat.name}")
+    ```
+
+    Keep your workspace organized by removing unused chats.
+  </Accordion>
+
+  <Accordion icon="users" title="Isolate User Conversations">
+    **Don't** share chats across users:
+    ```python
+    # Bad: Shared chat for all users
+    shared_chat = hippo.create_chat(folder.id, "Everyone")
+
+    # Good: Individual chats per user
+    user_chat = hippo.create_chat(
+        folder.id,
+        f"User {user_id}"
+    )
+    ```
+
+    Individual chats prevent context confusion and protect privacy.
+  </Accordion>
+
+  <Accordion icon="clock" title="Consider Chat Lifecycle">
+    **Temporary chats** (delete after session):
+    ```python
+    chat = hippo.create_chat(folder.id, f"Session {session_id}")
+    # ... use chat ...
+    hippo.delete_chat(chat.id)
+    ```
+
+    **Permanent chats** (keep for history):
+    ```python
+    chat = hippo.create_chat(folder.id, f"Customer {customer_id}")
+    # Keep for entire customer relationship
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Limits & Quotas
+
+<CardGroup cols={2}>
+  <Card title="Chats per Folder" icon="comments">
+    **Free tier**: Up to 50 chats
+    **Pro tier**: Up to 1,000 chats
+    **Enterprise**: Unlimited
+  </Card>
+
+  <Card title="Messages per Chat" icon="message">
+    **All tiers**: Unlimited Q&A exchanges
+    **Context window**: Last 10 exchanges used for context
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Q&A System"
+    icon="message-question"
+    href="/hippo/questions"
+  >
+    Ask questions in your chats
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize chat organization
+  </Card>
+  <Card
+    title="Examples"
+    icon="code"
+    href="/examples/rag-workflow"
+  >
+    Complete RAG workflow examples
+  </Card>
+</CardGroup>

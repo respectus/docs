@@ -2,62 +2,90 @@
 title: Overview
 ---
 
-**Lexa transforms unstructured documents into clean, structured data with enterprise-grade reliability.**
+<div align="center">
+  <h1>Flagship Results @ Mini Cost 🚀</h1>
+  <p style="font-size: 1.2em; margin: 1em 0;">
+    <strong>The Data Layer for AI Agents</strong><br/>
+    Precision retrieval delivers 70% smaller context — only relevant chunks, zero noise
+  </p>
+</div>
 
-Perfect for RAG applications, document analysis, data extraction, and vector database preparation.
-
-<CardGroup cols={2}>
-  <Card
-    title="10x Faster Processing"
-    icon="rocket"
-    color="#ea5a0c"
-  >
-    Industry-leading performance with native async support and concurrent processing
+<CardGroup cols={3}>
+  <Card icon="chart-line" color="#16a34a">
+    **80% COST REDUCTION**
+    Process 10x more requests with intelligent retrieval
   </Card>
-  <Card
-    title="SOTA Accuracy"
-    icon="bullseye"
-    color="#0285c7"
-  >
-    Cutting-edge ML models deliver the highest accuracy for text and table extraction
+  <Card icon="target" color="#0285c7">
+    **99.5% ACCURACY MATCH**
+    Flagship model quality at mini model cost
   </Card>
-  <Card
-    title="12+ File Formats"
-    icon="file-lines"
-    color="#16a34a"
-  >
-    PDF, DOCX, PPTX, HTML, CSV, XLSX, and more - all in one unified API
-  </Card>
-  <Card
-    title="Vector DB Ready"
-    icon="database"
-    color="#dc2626"
-  >
-    Optimized chunks with rich metadata, perfect for embedding and retrieval
+  <Card icon="rocket" color="#ea5a0c">
+    **10x MORE REQUESTS**
+    Smaller context windows = more throughput
   </Card>
 </CardGroup>
 
-## Why Choose Lexa?
+## The Platform
+
+**Cerevox provides three powerful APIs for building AI agent data infrastructure:**
+
+<CardGroup cols={3}>
+  <Card
+    title="Hippo - RAG & Retrieval"
+    icon="hippo"
+    color="#0285c7"
+    href="/hippo/overview"
+  >
+    **AI-powered search & Q&A**
+    → Semantic search across documents
+    → Q&A with source citations
+    → 70% smaller context windows
+  </Card>
+  <Card
+    title="Lexa - Document Parsing"
+    icon="file-lines"
+    color="#16a34a"
+    href="/lexa/overview"
+  >
+    **Extract structured data**
+    → 12+ file formats
+    → Vector DB ready chunks
+    → Cloud integrations
+  </Card>
+  <Card
+    title="Account - User Management"
+    icon="users"
+    color="#ea5a0c"
+    href="/account/overview"
+  >
+    **Enterprise operations**
+    → Authentication & tokens
+    → Usage tracking
+    → User management
+  </Card>
+</CardGroup>
+
+## Why Choose Cerevox?
 
 <AccordionGroup>
+  <Accordion icon="brain" title="Intelligent Retrieval - 80% Cost Savings">
+    - **Precision RAG** - Only retrieve relevant chunks, eliminate noise
+    - **70% smaller context** windows mean massive cost reduction
+    - **99.5% accuracy match** to flagship models at mini model cost
+    - **Smart chunking** optimized for semantic search and embeddings
+  </Accordion>
+
   <Accordion icon="bolt" title="Enterprise Performance & Scale">
-    - **10x faster** than traditional document parsing solutions
-    - **Native async support** with concurrent document processing  
+    - **10x faster** than traditional solutions
+    - **Native async support** across all APIs (Hippo, Lexa, Account)
     - **Enterprise-grade reliability** with automatic retries and error handling
-    - **Batch processing** capabilities for handling thousands of documents
+    - **Batch processing** for thousands of documents
   </Accordion>
-  
-  <Accordion icon="brain" title="AI-Powered Extraction">
-    - **SOTA accuracy** with cutting-edge ML models
-    - **Advanced table extraction** preserving structure and formatting
-    - **Smart text chunking** optimized for vector databases and RAG
-    - **Rich metadata extraction** including images, formatting, and document structure
-  </Accordion>
-  
-  <Accordion icon="plug" title="Integration Ready">
-    - **7+ cloud storage** integrations (S3, SharePoint, Google Drive, Box, Dropbox)
-    - **Framework agnostic** - works seamlessly with Django, Flask, FastAPI
-    - **Vector database optimized** chunks ready for your RAG applications
+
+  <Accordion icon="plug" title="Complete Integration Ecosystem">
+    - **Vector database ready** - Works with Pinecone, Weaviate, Chroma, etc.
+    - **7+ cloud storage** integrations (S3, SharePoint, Google Drive, Box)
+    - **Framework agnostic** - Django, Flask, FastAPI, LangChain
     - **Production ready** with comprehensive error handling and monitoring
   </Accordion>
 </AccordionGroup>
@@ -69,35 +97,40 @@ Perfect for RAG applications, document analysis, data extraction, and vector dat
 pip install cerevox
 ```
 
-```python Basic Usage
-from cerevox import Lexa
+```python Hippo - AI Q&A System
+from cerevox import Hippo
 
-# Initialize client
-client = Lexa(api_key="your-api-key")
+# Initialize Hippo client
+hippo = Hippo(api_key="your-api-key")
 
-# Parse a document - it's that simple!
-documents = client.parse(["invoice.pdf"])
+# Create a knowledge base folder
+folder = hippo.create_folder("Product Documentation")
 
-# Real output - not just {...}
-print(f"Extracted {len(documents[0].content)} characters")
-print(f"Found {len(documents[0].tables)} tables")
-# Returns structured data ready for your application
+# Upload documents
+hippo.upload_file(folder.id, "user-guide.pdf")
+hippo.upload_file(folder.id, "api-docs.pdf")
+
+# Create a chat session
+chat = hippo.create_chat(folder.id, "Technical Support")
+
+# Ask questions and get answers with citations
+answer = hippo.submit_ask(chat.id, "How do I authenticate users?")
+print(f"Answer: {answer.response}")
+print(f"Sources: {answer.sources}")
 ```
 
-```python Async (Recommended)
-import asyncio
-from cerevox import AsyncLexa
+```python Lexa - Document Parsing
+from cerevox import Lexa
 
-async def main():
-    async with AsyncLexa(api_key="your-api-key") as client:
-        # Process multiple documents concurrently
-        documents = await client.parse(["document.pdf", "report.docx"])
-        
-        # Get chunks optimized for vector databases
-        chunks = documents.get_all_text_chunks(target_size=500)
-        print(f"Ready for embedding: {len(chunks)} chunks")
+# Initialize Lexa client
+client = Lexa(api_key="your-api-key")
 
-asyncio.run(main())
+# Parse documents into structured data
+documents = client.parse(["invoice.pdf", "report.docx"])
+
+# Get vector DB optimized chunks
+chunks = documents.get_all_text_chunks(target_size=500)
+print(f"Ready for embedding: {len(chunks)} chunks")
 ```
 </CodeGroup>
 
@@ -108,17 +141,17 @@ asyncio.run(main())
 ## Real-World Use Cases
 
 <CardGroup cols={2}>
-  <Card title="RAG Applications" icon="messages" href="/usecases/knowledge">
-    Extract and chunk documents for retrieval-augmented generation systems
+  <Card title="AI Q&A Systems" icon="messages-question" href="/usecases/ai-qa-systems">
+    Build intelligent Q&A over documents with source citations and 80% cost savings
+  </Card>
+  <Card title="Knowledge Bases" icon="brain" href="/usecases/knowledge-bases">
+    Create searchable knowledge bases with semantic search and RAG retrieval
   </Card>
   <Card title="Financial Analysis" icon="chart-line" href="/usecases/financial">
-    Parse 10-K filings, annual reports, and financial statements with precision
+    Query 10-K filings, reports, and financial statements with natural language
   </Card>
   <Card title="Legal Research" icon="scale-balanced" href="/usecases/legal">
-    Analyze contracts, case files, and legal discovery documents
-  </Card>
-  <Card title="Market Intelligence" icon="trending-up" href="/usecases/market">
-    Aggregate insights from market reports and research papers
+    Search contracts and legal documents with precision retrieval
   </Card>
 </CardGroup>
 
@@ -130,33 +163,33 @@ asyncio.run(main())
     icon="play"
     href="/welcome/quickstart"
   >
-    Authenticate and make your first API call in under 3 minutes
+    Build your first RAG Q&A system in 5 minutes
   </Card>
   <Card
-    title="Code Examples"
+    title="Hippo - RAG & Retrieval"
+    icon="hippo"
+    href="/hippo/overview"
+  >
+    Complete guide to semantic search and Q&A
+  </Card>
+  <Card
+    title="Lexa - Document Parsing"
+    icon="file-lines"
+    href="/lexa/overview"
+  >
+    Extract structured data from documents
+  </Card>
+  <Card
+    title="RAG Examples"
     icon="laptop-code"
-    href="/examples/basic-usage"
+    href="/examples/rag-workflow"
   >
-    Copy-paste ready examples with real data
-  </Card>
-  <Card
-    title="API Reference"
-    icon="code"
-    href="/api/client"
-  >
-    Complete method signatures and parameter documentation
-  </Card>
-  <Card
-    title="Vector DB Integration"
-    icon="database"
-    href="/guides/vector-database-integration"
-  >
-    Ready-to-use patterns for popular vector databases
+    End-to-end RAG workflow examples
   </Card>
 </CardGroup>
 
 ---
 
 <Tip>
-  **Ready to parse?** Test Lexa instantly in our [Demo](https://cerevox.ai/lexa) or join our [Discord community](https://discord.gg/cerevox) for support.
+  **Ready to build?** Try our [Demo](https://cerevox.ai/lexa) or join our [Discord community](https://discord.gg/cerevox) for support.
 </Tip>

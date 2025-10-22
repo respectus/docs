@@ -1,0 +1,415 @@
+---
+title: "Hippo - RAG & Retrieval"
+description: "AI-powered semantic search and Q&A with 80% cost reduction"
+---
+
+# Hippo: RAG & Retrieval 🦛
+
+**Build intelligent Q&A systems over documents with flagship accuracy at mini model cost.**
+
+Hippo delivers precision retrieval with 70% smaller context windows, achieving **80% cost reduction** while maintaining **99.5% accuracy match** to flagship models.
+
+<CardGroup cols={3}>
+  <Card icon="chart-line" color="#16a34a">
+    **80% COST REDUCTION**
+    Only retrieve relevant chunks, not entire documents
+  </Card>
+  <Card icon="target" color="#0285c7">
+    **99.5% ACCURACY MATCH**
+    Flagship model quality with intelligent retrieval
+  </Card>
+  <Card icon="zap" color="#ea5a0c">
+    **70% SMALLER CONTEXT**
+    Precision RAG eliminates noise, keeps what matters
+  </Card>
+</CardGroup>
+
+## What is Hippo?
+
+Hippo is Cerevox's **RAG (Retrieval-Augmented Generation) API** that enables AI agents to search and query document collections with natural language.
+
+Instead of sending entire documents to your LLM (expensive, slow, noisy), Hippo:
+1. **Indexes** your documents with semantic understanding
+2. **Retrieves** only the most relevant chunks (70% smaller context)
+3. **Generates** AI answers with source citations
+4. **Saves** you 80% on LLM costs while matching flagship accuracy
+
+<Note>
+  **Perfect for**: Customer support bots, internal knowledge bases, document Q&A, research assistants, and any AI system that needs to "know" information from documents.
+</Note>
+
+## Core Concepts
+
+<AccordionGroup>
+  <Accordion icon="folder-tree" title="Folders - Organize Documents">
+    **Folders** are collections of documents that form a searchable knowledge base.
+
+    - Each folder is an isolated knowledge domain
+    - Upload PDFs, DOCX, PPTX, and more
+    - Automatically indexed for semantic search
+    - Support 1 to 10,000+ documents per folder
+
+    **Use cases**: Product docs, customer records, research papers, legal cases
+  </Accordion>
+
+  <Accordion icon="file" title="Files - Your Data Sources">
+    **Files** are the documents you upload to folders.
+
+    - Support 12+ formats: PDF, DOCX, PPTX, XLSX, TXT, HTML, CSV, etc.
+    - Upload from local files or URLs
+    - Automatic processing and indexing
+    - Rich metadata extraction
+
+    **Processing**: Files are automatically parsed, chunked, and indexed for retrieval
+  </Accordion>
+
+  <Accordion icon="comments" title="Chats - Conversation Context">
+    **Chat sessions** maintain conversation context for Q&A.
+
+    - Each chat is connected to a folder
+    - Maintains conversation history
+    - Supports follow-up questions
+    - Multiple chats per folder
+
+    **Use cases**: Support conversations, research sessions, document analysis
+  </Accordion>
+
+  <Accordion icon="message-question" title="Asks - Questions & Answers">
+    **Asks** are questions submitted to a chat that generate AI-powered answers.
+
+    - Natural language questions
+    - AI-generated answers with source citations
+    - Confidence scores for each answer
+    - Full conversation history accessible
+
+    **Returns**: Answer text + source documents + page numbers + confidence scores
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+```mermaid
+graph LR
+    A[Your Documents] --> B[Upload to Folder]
+    B --> C[Automatic Indexing]
+    C --> D[Create Chat Session]
+    D --> E[Ask Questions]
+    E --> F[Precision Retrieval<br/>70% smaller context]
+    F --> G[AI Answer + Citations]
+    G --> H[80% Cost Savings]
+```
+
+<Steps>
+  <Step title="Create a Folder">
+    Organize documents into a knowledge base
+  </Step>
+  <Step title="Upload Files">
+    Add documents from local files or URLs
+  </Step>
+  <Step title="Create Chat">
+    Start a conversation session linked to the folder
+  </Step>
+  <Step title="Ask Questions">
+    Submit natural language questions and get AI answers with sources
+  </Step>
+</Steps>
+
+## Quick Example
+
+<CodeGroup>
+```python Sync API
+from cerevox import Hippo
+
+# Initialize
+hippo = Hippo(api_key="your-api-key")
+
+# 1. Create knowledge base
+folder = hippo.create_folder("Product Documentation")
+
+# 2. Upload documents
+hippo.upload_file(folder.id, "user-guide.pdf")
+hippo.upload_file_from_url(folder.id, "https://example.com/api-docs.pdf")
+
+# 3. Create chat
+chat = hippo.create_chat(folder.id, "Support Q&A")
+
+# 4. Ask questions
+answer = hippo.submit_ask(
+    chat.id,
+    "How do I authenticate users?"
+)
+
+print(f"Answer: {answer.response}")
+print(f"Sources: {[s.file_name for s in answer.sources]}")
+# 80% cost reduction vs. full document retrieval!
+```
+
+```python Async API
+import asyncio
+from cerevox import AsyncHippo
+
+async def main():
+    async with AsyncHippo(api_key="your-api-key") as hippo:
+        # Create and upload concurrently
+        folder = await hippo.create_folder("Product Docs")
+
+        files = await asyncio.gather(
+            hippo.upload_file(folder.id, "guide.pdf"),
+            hippo.upload_file(folder.id, "docs.pdf")
+        )
+
+        # Create chat and ask
+        chat = await hippo.create_chat(folder.id, "Q&A")
+        answer = await hippo.submit_ask(chat.id, "How do I get started?")
+
+        print(f"Answer: {answer.response}")
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Semantic Search" icon="magnifying-glass">
+    **AI-powered understanding**
+    - Finds relevant content by meaning, not just keywords
+    - Handles synonyms and context
+    - Multi-language support
+  </Card>
+
+  <Card title="Source Citations" icon="quote-left">
+    **Verify every answer**
+    - Exact source documents
+    - Page numbers included
+    - Confidence scores
+  </Card>
+
+  <Card title="Conversation Memory" icon="brain">
+    **Contextual follow-ups**
+    - Chats remember previous questions
+    - Support clarifying questions
+    - Full history accessible
+  </Card>
+
+  <Card title="Multi-format Support" icon="file-lines">
+    **12+ file formats**
+    - PDF, DOCX, PPTX, XLSX
+    - TXT, HTML, CSV, and more
+    - Automatic format detection
+  </Card>
+
+  <Card title="Async Operations" icon="bolt">
+    **High performance**
+    - Full async/await support
+    - Concurrent uploads
+    - Batch processing
+  </Card>
+
+  <Card title="Enterprise Ready" icon="shield-check">
+    **Production proven**
+    - Automatic retries
+    - Error handling
+    - Usage tracking
+  </Card>
+</CardGroup>
+
+## The Cost Savings Advantage
+
+<Tabs>
+  <Tab title="Traditional RAG">
+    ```python
+    # Traditional approach: Send entire documents
+    documents = load_all_documents()  # Large context
+    context = "\n\n".join([doc.content for doc in documents])
+
+    # Send to LLM - EXPENSIVE
+    llm_response = openai.chat.completions.create(
+        messages=[{
+            "role": "user",
+            "content": f"Context: {context}\n\nQuestion: {question}"
+        }],
+        model="gpt-4"  # Flagship model required
+    )
+    # High token costs: 10,000+ tokens per query
+    # Slow: Large context = slower processing
+    # Noisy: Irrelevant content confuses the model
+    ```
+  </Tab>
+
+  <Tab title="Hippo RAG">
+    ```python
+    # Hippo approach: Precision retrieval
+    answer = hippo.submit_ask(chat_id, question)
+
+    # BEHIND THE SCENES:
+    # 1. Semantic search finds relevant chunks only
+    # 2. 70% smaller context (3,000 tokens vs 10,000)
+    # 3. Same accuracy as flagship models
+    # 4. Source citations included
+
+    print(f"Answer: {answer.response}")
+    print(f"Sources: {answer.sources}")
+
+    # 80% COST REDUCTION
+    # Faster: Smaller context = faster responses
+    # Cleaner: Only relevant content
+    # Verified: Source citations for every answer
+    ```
+  </Tab>
+</Tabs>
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion icon="headset" title="Customer Support Automation">
+    **Build AI support agents that answer customer questions**
+
+    - Upload help docs, FAQs, and knowledge base
+    - Customers ask questions in natural language
+    - Get instant answers with source citations
+    - 80% reduction in support costs
+
+    Example: "How do I reset my password?" → Answer + link to help article
+  </Accordion>
+
+  <Accordion icon="building" title="Internal Knowledge Bases">
+    **Make company knowledge searchable**
+
+    - Upload policies, procedures, onboarding docs
+    - Employees ask questions, get instant answers
+    - Reduce time spent searching for information
+    - Keep knowledge always accessible
+
+    Example: "What's our remote work policy?" → Answer from HR handbook
+  </Accordion>
+
+  <Accordion icon="scale-balanced" title="Legal & Compliance">
+    **Search contracts and legal documents**
+
+    - Upload contracts, agreements, legal cases
+    - Ask questions about terms, clauses, precedents
+    - Get answers with exact citations
+    - Verify every response with sources
+
+    Example: "What are the termination clauses?" → Answer with contract references
+  </Accordion>
+
+  <Accordion icon="flask" title="Research Assistants">
+    **Query research papers and technical docs**
+
+    - Upload papers, reports, technical documentation
+    - Ask research questions
+    - Get synthesized answers from multiple sources
+    - Citations to original papers
+
+    Example: "What methods did Smith et al. use?" → Answer from relevant papers
+  </Accordion>
+
+  <Accordion icon="chart-line" title="Financial Analysis">
+    **Query financial reports and filings**
+
+    - Upload 10-Ks, earnings reports, analyst notes
+    - Ask about metrics, trends, risks
+    - Get answers with exact page references
+    - Compare across multiple documents
+
+    Example: "What were Q3 revenue drivers?" → Answer from earnings call
+  </Accordion>
+</AccordionGroup>
+
+## Hippo vs. Traditional RAG
+
+| Feature | Traditional RAG | Hippo RAG |
+|---------|----------------|-----------|
+| **Context Size** | Full documents (10,000+ tokens) | Relevant chunks only (3,000 tokens) |
+| **Cost per Query** | $0.10 - $0.50 | $0.02 - $0.10 (80% reduction) |
+| **Accuracy** | Good (with flagship models) | 99.5% match (with mini models) |
+| **Response Time** | Slow (large context) | Fast (smaller context) |
+| **Source Citations** | Manual implementation | Built-in with confidence scores |
+| **Setup Complexity** | High (vector DB, embeddings, retrieval logic) | Low (API-only, no infrastructure) |
+| **Maintenance** | Ongoing (infrastructure, tuning) | None (managed service) |
+
+## API Clients
+
+Hippo provides both synchronous and asynchronous clients:
+
+<CodeGroup>
+```python Synchronous
+from cerevox import Hippo
+
+# Best for: Simple scripts, notebooks, learning
+hippo = Hippo(api_key="your-api-key")
+
+folder = hippo.create_folder("Docs")
+chat = hippo.create_chat(folder.id)
+answer = hippo.submit_ask(chat.id, "Question?")
+```
+
+```python Asynchronous
+from cerevox import AsyncHippo
+import asyncio
+
+# Best for: Production apps, high throughput, web servers
+async def main():
+    async with AsyncHippo(api_key="your-api-key") as hippo:
+        folder = await hippo.create_folder("Docs")
+        chat = await hippo.create_chat(folder.id)
+        answer = await hippo.submit_ask(chat.id, "Question?")
+
+asyncio.run(main())
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart Guide"
+    icon="rocket"
+    href="/hippo/quickstart"
+  >
+    Build your first Q&A system in 5 minutes
+  </Card>
+  <Card
+    title="Folder Management"
+    icon="folder-tree"
+    href="/hippo/folders"
+  >
+    Organize documents effectively
+  </Card>
+  <Card
+    title="File Operations"
+    icon="file"
+    href="/hippo/files"
+  >
+    Upload and manage documents
+  </Card>
+  <Card
+    title="Chat Sessions"
+    icon="comments"
+    href="/hippo/chat"
+  >
+    Create conversation contexts
+  </Card>
+  <Card
+    title="Q&A System"
+    icon="message-question"
+    href="/hippo/questions"
+  >
+    Ask questions and get answers
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize retrieval quality and costs
+  </Card>
+</CardGroup>
+
+---
+
+<Tip>
+  **Ready to save 80%?** Check out the [quickstart guide](/hippo/quickstart) or explore [RAG examples](/examples/rag-workflow).
+</Tip>

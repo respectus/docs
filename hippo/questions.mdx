@@ -1,0 +1,468 @@
+---
+title: "Q&A System"
+description: "Ask questions and get AI-powered answers with citations"
+---
+
+# Q&A System
+
+Submit questions to your documents and get AI-generated answers with source citations and **80% cost savings**.
+
+## How it Works
+
+When you ask a question, Hippo:
+
+<Steps>
+  <Step title="Semantic Search">
+    Finds relevant chunks from your documents (not keyword matching)
+  </Step>
+  <Step title="Precision Retrieval">
+    Retrieves only what's needed (**70% smaller context**)
+  </Step>
+  <Step title="AI Generation">
+    Generates answer using mini model with flagship accuracy
+  </Step>
+  <Step title="Source Citations">
+    Returns answer + source documents + confidence scores
+  </Step>
+</Steps>
+
+**Result**: 99.5% accuracy match to flagship models at 80% lower cost!
+
+## Submit Questions
+
+### Basic Q&A
+
+<CodeGroup>
+```python Sync
+from cerevox import Hippo
+
+hippo = Hippo(api_key="your-api-key")
+
+# Ask a question
+answer = hippo.submit_ask(
+    chat_id="chat_123",
+    question="How do I authenticate users in the API?"
+)
+
+# Access the response
+print(f"Answer: {answer.response}")
+print(f"Confidence: {answer.confidence_score}")
+print(f"Sources: {len(answer.sources)}")
+```
+
+```python Async
+from cerevox import AsyncHippo
+
+async with AsyncHippo() as hippo:
+    answer = await hippo.submit_ask(
+        chat_id="chat_123",
+        question="What is the API rate limit?"
+    )
+
+    print(f"Answer: {answer.response}")
+```
+</CodeGroup>
+
+### Response Structure
+
+The answer object contains:
+
+<ResponseField name="response" type="string">
+  The AI-generated answer to your question
+</ResponseField>
+
+<ResponseField name="question" type="string">
+  The original question (as processed)
+</ResponseField>
+
+<ResponseField name="confidence_score" type="float">
+  Confidence score from 0.0 to 1.0
+  - `0.9+`: High confidence
+  - `0.7-0.9`: Medium confidence
+  - `< 0.7`: Low confidence (verify sources)
+</ResponseField>
+
+<ResponseField name="sources" type="array">
+  List of source documents cited in the answer
+
+  Each source contains:
+  - `file_name`: Name of the source file
+  - `file_id`: Unique file identifier
+  - `page_number`: Page where info was found
+  - `relevance_score`: How relevant (0.0-1.0)
+  - `excerpt`: Text snippet from source
+</ResponseField>
+
+<ResponseField name="created_at" type="timestamp">
+  When the question was answered
+</ResponseField>
+
+### Access Source Citations
+
+```python
+# Ask question
+answer = hippo.submit_ask(chat_id, "What is the refund policy?")
+
+# Display answer
+print(f"Answer: {answer.response}\n")
+
+# Show sources
+print(f"Based on {len(answer.sources)} sources:")
+for source in answer.sources:
+    print(f"\n📄 {source.file_name}")
+    print(f"   Page: {source.page_number}")
+    print(f"   Relevance: {source.relevance_score:.2f}")
+    print(f"   Excerpt: {source.excerpt[:100]}...")
+```
+
+## Question History
+
+### Get All Q&A for a Chat
+
+<CodeGroup>
+```python Sync
+# Get complete Q&A history
+asks = hippo.get_asks(chat_id="chat_123")
+
+for ask in asks:
+    print(f"Q: {ask.question}")
+    print(f"A: {ask.response}")
+    print(f"Confidence: {ask.confidence_score}\n")
+```
+
+```python Async
+asks = await hippo.get_asks(chat_id="chat_123")
+
+for ask in asks:
+    print(f"{ask.question} → {ask.response[:100]}...")
+```
+</CodeGroup>
+
+### Get Specific Q&A by Index
+
+```python
+# Get the 3rd question/answer from chat
+ask = hippo.get_ask_by_index(
+    chat_id="chat_123",
+    index=2  # 0-indexed
+)
+
+print(f"Q: {ask.question}")
+print(f"A: {ask.response}")
+```
+
+## Follow-up Questions
+
+Chats remember context for follow-up questions:
+
+```python
+# First question
+answer1 = hippo.submit_ask(
+    chat_id,
+    "What are the API authentication methods?"
+)
+print(f"A1: {answer1.response}")
+
+# Follow-up (references "methods" from Q1)
+answer2 = hippo.submit_ask(
+    chat_id,
+    "Which one is most secure?"  # Understands context
+)
+print(f"A2: {answer2.response}")
+
+# Another follow-up (references "secure method" from Q2)
+answer3 = hippo.submit_ask(
+    chat_id,
+    "How do I implement it?"  # Knows what "it" refers to
+)
+print(f"A3: {answer3.response}")
+```
+
+<Note>
+  **Context memory**: Last 10 Q&A exchanges are used for context in follow-up questions.
+</Note>
+
+## Question Types
+
+<AccordionGroup>
+  <Accordion icon="circle-info" title="Factual Questions">
+    **Best for**: Specific information retrieval
+
+    ```python
+    questions = [
+        "What is the API rate limit?",
+        "What's the refund policy?",
+        "What programming languages are supported?"
+    ]
+    ```
+
+    **Performance**: Highest accuracy (99.5%+ with clear documentation)
+  </Accordion>
+
+  <Accordion icon="list" title="How-To Questions">
+    **Best for**: Step-by-step instructions
+
+    ```python
+    questions = [
+        "How do I reset my password?",
+        "How can I integrate with Stripe?",
+        "How do I export data to CSV?"
+    ]
+    ```
+
+    **Performance**: Excellent when docs contain clear procedures
+  </Accordion>
+
+  <Accordion icon="scale-unbalanced-flip" title="Comparison Questions">
+    **Best for**: Comparing options or features
+
+    ```python
+    questions = [
+        "What's the difference between Basic and Pro plans?",
+        "How does REST compare to GraphQL in our API?",
+        "Which authentication method is most secure?"
+    ]
+    ```
+
+    **Performance**: Good when comparison info exists in docs
+  </Accordion>
+
+  <Accordion icon="list-check" title="Summary Questions">
+    **Best for**: Synthesizing information
+
+    ```python
+    questions = [
+        "What are the main features of Product X?",
+        "Summarize the key risks in this contract",
+        "What were the Q3 revenue highlights?"
+    ]
+    ```
+
+    **Performance**: Good for overview questions across multiple sources
+  </Accordion>
+
+  <Accordion icon="circle-question" title="Yes/No Questions">
+    **Best for**: Quick verification
+
+    ```python
+    questions = [
+        "Does the API support webhooks?",
+        "Can I export data to Excel?",
+        "Is there a mobile app?"
+    ]
+    ```
+
+    **Performance**: Excellent with clear documentation
+  </Accordion>
+</AccordionGroup>
+
+## Writing Effective Questions
+
+<CardGroup cols={2}>
+  <Card title="Be Specific" icon="bullseye">
+    ✅ "What is the API rate limit for Pro plan users?"
+    ❌ "Tell me about limits"
+
+    Specific questions get specific answers
+  </Card>
+
+  <Card title="Use Natural Language" icon="comment">
+    ✅ "How do I reset my password?"
+    ❌ "password reset procedure documentation"
+
+    Write questions as you'd ask a person
+  </Card>
+
+  <Card title="One Question at a Time" icon="1">
+    ✅ "What is the refund policy?"
+    ❌ "What's the refund policy and cancellation process and payment methods?"
+
+    Multiple questions → Ask separately for better answers
+  </Card>
+
+  <Card title="Provide Context if Needed" icon="link">
+    ✅ "In the REST API, how do I authenticate?"
+    ❌ "How authenticate?" (ambiguous)
+
+    Context helps when docs cover multiple systems
+  </Card>
+</CardGroup>
+
+## Interpreting Confidence Scores
+
+```python
+answer = hippo.submit_ask(chat_id, question)
+
+if answer.confidence_score >= 0.9:
+    print("✅ High confidence - Answer is very reliable")
+elif answer.confidence_score >= 0.7:
+    print("⚠️ Medium confidence - Check sources to verify")
+else:
+    print("⚠️ Low confidence - Information may not be in documents")
+    print("Consider:")
+    print("- Rephrasing the question")
+    print("- Adding relevant documents")
+    print("- Checking if info exists in uploaded files")
+```
+
+## Complete Example: Support Bot
+
+```python
+from cerevox import Hippo
+
+class SupportBot:
+    def __init__(self, api_key):
+        self.hippo = Hippo(api_key=api_key)
+        self.folder = None
+        self.chat = None
+
+    def setup(self, support_docs):
+        """Initialize knowledge base"""
+        # Create folder
+        self.folder = self.hippo.create_folder(
+            "Support Knowledge Base",
+            "Customer support documentation"
+        )
+
+        # Upload support docs
+        for doc in support_docs:
+            self.hippo.upload_file(self.folder.id, doc)
+
+        # Create chat
+        self.chat = self.hippo.create_chat(
+            self.folder.id,
+            "Customer Support Chat"
+        )
+
+    def ask(self, question):
+        """Ask a support question"""
+        answer = self.hippo.submit_ask(self.chat.id, question)
+
+        # Format response
+        response = {
+            'answer': answer.response,
+            'confidence': answer.confidence_score,
+            'sources': [
+                {
+                    'file': s.file_name,
+                    'page': s.page_number,
+                    'relevance': s.relevance_score
+                }
+                for s in answer.sources
+            ]
+        }
+
+        return response
+
+    def get_history(self):
+        """Get all Q&A history"""
+        return self.hippo.get_asks(self.chat.id)
+
+# Usage
+bot = SupportBot(api_key="your-api-key")
+bot.setup(["faq.pdf", "user-guide.pdf", "troubleshooting.pdf"])
+
+# Ask questions
+questions = [
+    "How do I reset my password?",
+    "What payment methods are accepted?",
+    "How long does shipping take?"
+]
+
+for q in questions:
+    result = bot.ask(q)
+    print(f"\nQ: {q}")
+    print(f"A: {result['answer']}")
+    print(f"Confidence: {result['confidence']:.2f}")
+    print(f"Sources: {len(result['sources'])}")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="check" title="Verify Low-Confidence Answers">
+    ```python
+    answer = hippo.submit_ask(chat_id, question)
+
+    if answer.confidence_score < 0.7:
+        print("Low confidence - verifying sources...")
+
+        for source in answer.sources:
+            print(f"Check: {source.file_name}, page {source.page_number}")
+    ```
+
+    Always check sources for low-confidence answers.
+  </Accordion>
+
+  <Accordion icon="rotate" title="Rephrase if Needed">
+    ```python
+    # First attempt
+    answer1 = hippo.submit_ask(chat_id, "What's the policy?")
+
+    if answer1.confidence_score < 0.7:
+        # Rephrase with more context
+        answer2 = hippo.submit_ask(
+            chat_id,
+            "What is the company's refund policy for products?"
+        )
+    ```
+
+    More specific questions → Better answers
+  </Accordion>
+
+  <Accordion icon="books" title="Add Documents if Information Missing">
+    ```python
+    answer = hippo.submit_ask(chat_id, "What is the SLA?")
+
+    if len(answer.sources) == 0:
+        print("No sources found - may need to upload SLA document")
+
+        # Upload missing documentation
+        hippo.upload_file(folder_id, "service-level-agreement.pdf")
+
+        # Ask again
+        answer = hippo.submit_ask(chat_id, "What is the SLA?")
+    ```
+  </Accordion>
+
+  <Accordion icon="message" title="Use Follow-ups for Clarification">
+    ```python
+    # Initial question
+    a1 = hippo.submit_ask(chat_id, "How do I authenticate?")
+
+    # If answer mentions multiple methods, follow up
+    a2 = hippo.submit_ask(chat_id, "Which method is recommended?")
+
+    # Further clarification
+    a3 = hippo.submit_ask(chat_id, "Can you show an example?")
+    ```
+
+    Conversation flow leads to better understanding
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/hippo/best-practices"
+  >
+    Optimize answer quality and costs
+  </Card>
+  <Card
+    title="Examples"
+    icon="code"
+    href="/examples/rag-workflow"
+  >
+    Complete RAG workflow examples
+  </Card>
+  <Card
+    title="Folder Management"
+    icon="folder"
+    href="/hippo/folders"
+  >
+    Organize your knowledge bases
+  </Card>
+</CardGroup>
